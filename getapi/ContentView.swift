@@ -1,23 +1,6 @@
 import Combine
 import SwiftUI
 
-struct APIRequest: Identifiable, Hashable {
-    let id = UUID()
-    var method: String
-    var url: String
-    var name: String
-    static func new() -> APIRequest {
-        APIRequest(method: "GET", url: "", name: "New HTTP Request")
-    }
-}
-
-struct APIResponse {
-    var statusCode: Int
-    var headers: [String: String]
-    var data: Data?
-    var error: Error?
-}
-
 struct ContentView: View {
     @State private var isSidebarVisible = true
     @State private var requests: [APIRequest] = []
