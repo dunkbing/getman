@@ -11,29 +11,21 @@ struct APIRequest: Identifiable, Hashable {
 }
 
 struct ContentView: View {
+    @State private var isSidebarVisible = true
     @State private var requests: [APIRequest] = []
     @State private var searchText = ""
     @State private var selectedRequest: APIRequest?
 
     var body: some View {
         HSplitView {
-            // Sidebar
-            VStack {
-                List(selection: $selectedRequest) {
-                    ForEach(requests) { request in
-                        HStack {
-                            Text(request.method)
-                                .font(.caption)
-                                .foregroundColor(.gray)
-                            Text(request.name)
-                        }
-                    }
-                }
-                TextField("Search requests...", text: $searchText)
-                    .textFieldStyle(RoundedBorderTextFieldStyle())
-                    .padding()
+            if isSidebarVisible {
+                SidebarView(
+                    requests: $requests, searchText: $searchText, selectedRequest: $selectedRequest
+                )
+                .frame(minWidth: 200, maxWidth: 300)
+                .transition(.move(edge: .leading))
+                .animation(.default, value: isSidebarVisible)
             }
-            .frame(minWidth: 200, maxWidth: 300)
 
             if let selectedRequest = selectedRequest {
                 RequestResponseView(request: selectedRequest)
@@ -45,6 +37,48 @@ struct ContentView: View {
                 }
             }
         }
+        .toolbar {
+            ToolbarItemGroup(placement: .navigation) {
+                Button(action: {
+                    isSidebarVisible.toggle()
+                }) {
+                    Image(systemName: isSidebarVisible ? "sidebar.left" : "sidebar.right")
+                }
+                Button(action: createNewRequest) {
+                    Image(systemName: "plus")
+                }
+            }
+        }
+    }
+
+    private func createNewRequest() {
+        let newRequest = APIRequest.new()
+        requests.append(newRequest)
+        selectedRequest = newRequest
+    }
+}
+
+struct SidebarView: View {
+    @Binding var requests: [APIRequest]
+    @Binding var searchText: String
+    @Binding var selectedRequest: APIRequest?
+
+    var body: some View {
+        VStack {
+            List(selection: $selectedRequest) {
+                ForEach(requests) { request in
+                    HStack {
+                        Text(request.method)
+                            .font(.caption)
+                            .foregroundColor(.gray)
+                        Text(request.name)
+                    }
+                }
+            }
+            TextField("Search requests...", text: $searchText)
+                .textFieldStyle(RoundedBorderTextFieldStyle())
+                .padding()
+        }
     }
 }
 
@@ -53,21 +87,21 @@ struct RequestResponseView: View {
     @State private var currentURL = ""
     @State private var selectedInputTab = 0
     @State private var selectedResponseTab = 0
-    @State private var selectedMethod = "GET"  // Add state for method
+    @State private var selectedMethod = "GET"
 
     var body: some View {
         HSplitView {
             // Request Panel
             VStack(spacing: 16) {
                 HStack {
-                    Picker("Method", selection: $selectedMethod) {  // Bind to selectedMethod
+                    Picker("", selection: $selectedMethod) {
                         Text("GET").tag("GET")
                         Text("POST").tag("POST")
                         Text("PUT").tag("PUT")
                         Text("DELETE").tag("DELETE")
                     }
+                    .labelsHidden()
                     .fixedSize()
-                    .padding(.horizontal, 6)
 
                     TextField("Enter URL", text: $currentURL)
                         .textFieldStyle(RoundedBorderTextFieldStyle())
@@ -84,7 +118,7 @@ struct RequestResponseView: View {
             .padding()
             .frame(minWidth: 400)
 
-            // Response Panel remains the same
+            // Response Panel
             TabView(selection: $selectedResponseTab) {
                 Text("Pretty").tabItem { Text("Pretty") }.tag(0)
                 Text("Raw").tabItem { Text("Raw") }.tag(1)
