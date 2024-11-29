@@ -1,3 +1,4 @@
+import Combine
 import SwiftUI
 
 struct APIRequest: Identifiable, Hashable {
@@ -98,6 +99,8 @@ struct RequestResponseView: View {
     @State private var response: APIResponse?
     @State private var statusText = "connecting - 0s - 0B"
     @State private var isLoading = false
+    @State private var isSending = false
+    @State private var task: URLSessionTask?
 
     func sendRequest() async {
         guard let url = URL(string: currentURL) else { return }
@@ -107,38 +110,39 @@ struct RequestResponseView: View {
 
         let startTime = Date()
         isLoading = true
+        isSending = true
         statusText = "connecting - 0s - 0B"
 
-        do {
-            let (data, response) = try await URLSession.shared.data(for: urlRequest)
+        let session = URLSession.shared
+        task = session.dataTask(with: urlRequest) { data, response, error in
             guard let httpResponse = response as? HTTPURLResponse else { return }
 
             let endTime = Date()
             let requestTime = endTime.timeIntervalSince(startTime)
-            let responseSize = data.count
+            let responseSize = data?.count ?? 0
 
             DispatchQueue.main.async {
                 self.response = APIResponse(
                     statusCode: httpResponse.statusCode,
                     headers: httpResponse.allHeaderFields as? [String: String] ?? [:],
-                    data: data
+                    data: data,
+                    error: error
                 )
                 self.selectedResponseTab = 0  // Switch to Pretty view
                 self.isLoading = false
+                self.isSending = false
                 self.statusText =
                     "\(httpResponse.statusCode) OK - \(String(format: "%.2f", requestTime))s - \(responseSize) B"
             }
-        } catch {
-            DispatchQueue.main.async {
-                self.response = APIResponse(
-                    statusCode: 0,
-                    headers: [:],
-                    error: error
-                )
-                self.isLoading = false
-                self.statusText = "Error - 0s - 0B"
-            }
         }
+        task?.resume()
+    }
+
+    func cancelRequest() {
+        task?.cancel()
+        isSending = false
+        isLoading = false
+        statusText = "Request cancelled"
     }
 
     var body: some View {
@@ -163,9 +167,28 @@ struct RequestResponseView: View {
                     )
                     .textFieldStyle(RoundedBorderTextFieldStyle())
 
-                    Button("Send") {
-                        Task { await sendRequest() }
+                    Button(action: {
+                        if isSending {
+                            cancelRequest()
+                        } else {
+                            Task {
+                                await sendRequest()
+                            }
+                        }
+                    }) {
+                        if isSending {
+                            HStack {
+                                Image(systemName: "xmark.circle.fill")
+                                Text("Cancel")
+                            }
+                        } else {
+                            HStack {
+                                Image(systemName: "paperplane.fill")
+                                Text("Send")
+                            }
+                        }
                     }
+                    .buttonStyle(.borderedProminent)
                 }
 
                 TabView(selection: $selectedInputTab) {
@@ -180,13 +203,22 @@ struct RequestResponseView: View {
             // Response Panel
             VStack {
                 HStack {
-                    if isLoading {
-                        CircularLoadingIndicator()
-                            .frame(width: 10, height: 10)
+                    ZStack(alignment: .leading) {
+                        Text(statusText)
+                            .font(.headline)
+                            .foregroundColor(.gray)
+                            .opacity(isLoading ? 0 : 1)
+
+                        if isLoading {
+                            HStack {
+                                CircularLoadingIndicator()
+                                    .frame(width: 10, height: 10)
+                                Spacer()
+                                    .frame(width: 5)
+                            }
+                            .transition(.opacity)
+                        }
                     }
-                    Text(statusText)
-                        .font(.headline)
-                        .foregroundColor(.gray)
                 }
                 .padding(.vertical, 8)
 
