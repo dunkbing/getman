@@ -96,6 +96,8 @@ struct RequestResponseView: View {
     @State private var selectedResponseTab = 0
     @State private var selectedMethod = "GET"
     @State private var response: APIResponse?
+    @State private var statusText = "connecting - 0s - 0B"
+    @State private var isLoading = false
 
     func sendRequest() async {
         guard let url = URL(string: currentURL) else { return }
@@ -103,9 +105,17 @@ struct RequestResponseView: View {
         var urlRequest = URLRequest(url: url)
         urlRequest.httpMethod = selectedMethod
 
+        let startTime = Date()
+        isLoading = true
+        statusText = "connecting - 0s - 0B"
+
         do {
             let (data, response) = try await URLSession.shared.data(for: urlRequest)
             guard let httpResponse = response as? HTTPURLResponse else { return }
+
+            let endTime = Date()
+            let requestTime = endTime.timeIntervalSince(startTime)
+            let responseSize = data.count
 
             DispatchQueue.main.async {
                 self.response = APIResponse(
@@ -113,7 +123,10 @@ struct RequestResponseView: View {
                     headers: httpResponse.allHeaderFields as? [String: String] ?? [:],
                     data: data
                 )
-                self.selectedResponseTab = 0 // Switch to Pretty view
+                self.selectedResponseTab = 0  // Switch to Pretty view
+                self.isLoading = false
+                self.statusText =
+                    "\(httpResponse.statusCode) OK - \(String(format: "%.2f", requestTime))s - \(responseSize) B"
             }
         } catch {
             DispatchQueue.main.async {
@@ -122,6 +135,8 @@ struct RequestResponseView: View {
                     headers: [:],
                     error: error
                 )
+                self.isLoading = false
+                self.statusText = "Error - 0s - 0B"
             }
         }
     }
@@ -140,9 +155,12 @@ struct RequestResponseView: View {
                     .labelsHidden()
                     .fixedSize()
 
-                    TextField("Enter URL", text: $currentURL, onCommit: {
-                        Task { await sendRequest() }
-                    })
+                    TextField(
+                        "Enter URL", text: $currentURL,
+                        onCommit: {
+                            Task { await sendRequest() }
+                        }
+                    )
                     .textFieldStyle(RoundedBorderTextFieldStyle())
 
                     Button("Send") {
@@ -160,66 +178,103 @@ struct RequestResponseView: View {
             .frame(minWidth: 400)
 
             // Response Panel
-            TabView(selection: $selectedResponseTab) {
-                // Pretty JSON View
-                ScrollView {
-                    if let data = response?.data,
-                       let json = try? JSONSerialization.jsonObject(with: data),
-                       let prettyData = try? JSONSerialization.data(withJSONObject: json, options: .prettyPrinted),
-                       let prettyString = String(data: prettyData, encoding: .utf8) {
-                        Text(prettyString)
-                            .font(.system(.body, design: .monospaced))
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .padding()
+            VStack {
+                HStack {
+                    if isLoading {
+                        CircularLoadingIndicator()
+                            .frame(width: 10, height: 10)
                     }
+                    Text(statusText)
+                        .font(.headline)
+                        .foregroundColor(.gray)
                 }
-                .tabItem { Text("Pretty") }
-                .tag(0)
+                .padding(.vertical, 8)
 
-                // Raw View
-                ScrollView {
-                    if let data = response?.data,
-                       let rawString = String(data: data, encoding: .utf8) {
-                        Text(rawString)
-                            .font(.system(.body, design: .monospaced))
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .padding()
+                if response == nil {
+                    VStack(spacing: 16) {
+                        Text("Send Request")
+                            .font(.title)
+                            .padding(.bottom, 8)
+                        Text("New Request")
+                            .font(.title2)
+                            .padding(.bottom, 8)
+                        Text("Focus or Toggle Sidebar")
+                            .font(.title3)
+                            .padding(.bottom, 8)
+                        Text("Focus URL")
+                            .font(.title3)
                     }
-                }
-                .tabItem { Text("Raw") }
-                .tag(1)
-
-                // Headers View
-                ScrollView {
-                    if let headers = response?.headers {
-                        ForEach(headers.sorted(by: { $0.key < $1.key }), id: \.key) { key, value in
-                            VStack(alignment: .leading) {
-                                Text(key).bold()
-                                Text(value)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .cornerRadius(8)
+                    .shadow(radius: 4)
+                    .padding()
+                } else {
+                    TabView(selection: $selectedResponseTab) {
+                        // Pretty JSON View
+                        ScrollView {
+                            if let data = response?.data,
+                                let json = try? JSONSerialization.jsonObject(with: data),
+                                let prettyData = try? JSONSerialization.data(
+                                    withJSONObject: json, options: .prettyPrinted),
+                                let prettyString = String(data: prettyData, encoding: .utf8)
+                            {
+                                Text(prettyString)
+                                    .font(.system(.body, design: .monospaced))
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                    .padding()
                             }
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .padding(.vertical, 4)
                         }
-                    }
-                }
-                .padding()
-                .tabItem { Text("Headers") }
-                .tag(2)
+                        .tabItem { Text("Pretty") }
+                        .tag(0)
 
-                // Info View
-                VStack(alignment: .leading, spacing: 12) {
-                    if let response = response {
-                        Text("Status Code: \(response.statusCode)")
-                        if let error = response.error {
-                            Text("Error: \(error.localizedDescription)")
-                                .foregroundColor(.red)
+                        // Raw View
+                        ScrollView {
+                            if let data = response?.data,
+                                let rawString = String(data: data, encoding: .utf8)
+                            {
+                                Text(rawString)
+                                    .font(.system(.body, design: .monospaced))
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                    .padding()
+                            }
                         }
+                        .tabItem { Text("Raw") }
+                        .tag(1)
+
+                        // Headers View
+                        ScrollView {
+                            if let headers = response?.headers {
+                                ForEach(headers.sorted(by: { $0.key < $1.key }), id: \.key) {
+                                    key, value in
+                                    VStack(alignment: .leading) {
+                                        Text(key).bold()
+                                        Text(value)
+                                    }
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                    .padding(.vertical, 4)
+                                }
+                            }
+                        }
+                        .padding()
+                        .tabItem { Text("Headers") }
+                        .tag(2)
+
+                        // Info View
+                        VStack(alignment: .leading, spacing: 12) {
+                            if let response = response {
+                                Text("Status Code: \(response.statusCode)")
+                                if let error = response.error {
+                                    Text("Error: \(error.localizedDescription)")
+                                        .foregroundColor(.red)
+                                }
+                            }
+                        }
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding()
+                        .tabItem { Text("Info") }
+                        .tag(3)
                     }
                 }
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .padding()
-                .tabItem { Text("Info") }
-                .tag(3)
             }
             .frame(minWidth: 300)
             .padding()
