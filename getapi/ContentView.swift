@@ -27,22 +27,26 @@ struct ContentView: View {
     @State private var params: [String: String] = [:]
 
     var filteredRequests: [APIRequest] {
-        if searchText.isEmpty {
-            return requests
-        }
+        if searchText.isEmpty { return requests }
         return requests.filter { $0.name.localizedCaseInsensitiveContains(searchText) }
     }
 
     var body: some View {
-        NavigationView {
+        HSplitView {
             // Sidebar
-            List(filteredRequests, selection: $selectedRequest) { request in
-                Text(request.name)
-            }
-            .frame(minWidth: 200)
-            .searchable(text: $searchText)
+            VStack {
+                List(filteredRequests, selection: $selectedRequest) { request in
+                    Text(request.name)
+                }
 
-            // Main Content
+                // Search at bottom
+                TextField("Search requests...", text: $searchText)
+                    .textFieldStyle(RoundedBorderTextFieldStyle())
+                    .padding()
+            }
+            .frame(minWidth: 200, maxWidth: 300)
+
+            // Request Panel (Middle)
             VStack(spacing: 16) {
                 // URL Input
                 HStack {
@@ -76,28 +80,30 @@ struct ContentView: View {
                         .tabItem { Text("Headers") }
                         .tag(2)
                 }
-
-                // Response Panel
-                TabView(selection: $selectedResponseTab) {
-                    ResponseView(responseBody: responseBody, mode: .pretty)
-                        .tabItem { Text("Pretty") }
-                        .tag(0)
-
-                    ResponseView(responseBody: responseBody, mode: .raw)
-                        .tabItem { Text("Raw") }
-                        .tag(1)
-
-                    ResponseHeadersView()
-                        .tabItem { Text("Headers") }
-                        .tag(2)
-
-                    ResponseInfoView()
-                        .tabItem { Text("Info") }
-                        .tag(3)
-                }
             }
             .padding()
-            .frame(minWidth: 600)
+            .frame(minWidth: 400)
+
+            // Response Panel (Right)
+            TabView(selection: $selectedResponseTab) {
+                ResponseView(responseBody: responseBody, mode: .pretty)
+                    .tabItem { Text("Pretty") }
+                    .tag(0)
+
+                ResponseView(responseBody: responseBody, mode: .raw)
+                    .tabItem { Text("Raw") }
+                    .tag(1)
+
+                ResponseHeadersView()
+                    .tabItem { Text("Headers") }
+                    .tag(2)
+
+                ResponseInfoView()
+                    .tabItem { Text("Info") }
+                    .tag(3)
+            }
+            .frame(minWidth: 300)
+            .padding()
         }
     }
 }
@@ -119,10 +125,12 @@ struct ParamsView: View {
             ForEach(Array(params.keys), id: \.self) { key in
                 HStack {
                     TextField("Key", text: .constant(key))
-                    TextField("Value", text: Binding(
-                        get: { params[key] ?? "" },
-                        set: { params[key] = $0 }
-                    ))
+                    TextField(
+                        "Value",
+                        text: Binding(
+                            get: { params[key] ?? "" },
+                            set: { params[key] = $0 }
+                        ))
                 }
             }
 
@@ -141,10 +149,12 @@ struct HeadersView: View {
             ForEach(Array(headers.keys), id: \.self) { key in
                 HStack {
                     TextField("Key", text: .constant(key))
-                    TextField("Value", text: Binding(
-                        get: { headers[key] ?? "" },
-                        set: { headers[key] = $0 }
-                    ))
+                    TextField(
+                        "Value",
+                        text: Binding(
+                            get: { headers[key] ?? "" },
+                            set: { headers[key] = $0 }
+                        ))
                 }
             }
 
