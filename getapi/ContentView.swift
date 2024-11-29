@@ -154,7 +154,11 @@ struct RequestResponseView: View {
                         Text("GET").tag("GET")
                         Text("POST").tag("POST")
                         Text("PUT").tag("PUT")
+                        Text("PATCH").tag("PATCH")
                         Text("DELETE").tag("DELETE")
+                        Text("OPTIONS").tag("OPTIONS")
+                        Text("QUERY").tag("QUERY")
+                        Text("HEAD").tag("HEAD")
                     }
                     .labelsHidden()
                     .fixedSize()
