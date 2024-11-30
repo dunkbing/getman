@@ -108,6 +108,18 @@ struct RequestResponseView: View {
     @State private var isLoading = false
     @State private var isSending = false
     @State private var task: URLSessionTask?
+    @State private var selectedBodyType = BodyType.urlEncoded
+
+    enum BodyType: String, CaseIterable {
+        case urlEncoded = "Url Encoded"
+        case multiPart = "Multi-Part"
+        case json = "JSON"
+        case graphQL = "GraphQL"
+        case xml = "XML"
+        case other = "Other"
+        case binaryFile = "Binary File"
+        case noBody = "No Body"
+    }
 
     func sendRequest() async {
         guard let url = URL(string: currentURL) else { return }
@@ -203,7 +215,48 @@ struct RequestResponseView: View {
                 }
 
                 TabView(selection: $selectedInputTab) {
-                    Text("Body").tabItem { Text("Body") }.tag(0)
+                    VStack {
+                        Picker("Body Type", selection: $selectedBodyType) {
+                            Section(header: Text("Form Data")) {
+                                Text(BodyType.urlEncoded.rawValue)
+                                    .tag(BodyType.urlEncoded)
+                                Text(BodyType.multiPart.rawValue)
+                                    .tag(BodyType.multiPart)
+                            }
+                            Section(header: Text("Text Content")) {
+                                Text(BodyType.json.rawValue).tag(BodyType.json)
+                                Text(BodyType.graphQL.rawValue).tag(BodyType.graphQL)
+                                Text(BodyType.xml.rawValue).tag(BodyType.xml)
+                                Text(BodyType.other.rawValue).tag(BodyType.other)
+                            }
+                            Section(header: Text("Other")) {
+                                Text(BodyType.binaryFile.rawValue)
+                                    .tag(BodyType.binaryFile)
+                                Text(BodyType.noBody.rawValue)
+                                    .tag(BodyType.noBody)
+                            }
+                        }
+                        .fixedSize()
+
+                        if selectedBodyType == .noBody {
+                            VStack {
+                                Image(systemName: "nosign")
+                                    .resizable()
+                                    .frame(width: 50, height: 50)
+                                    .foregroundColor(.gray)
+                                Text("No Body")
+                                    .font(.title)
+                                    .foregroundColor(.gray)
+                            }
+                            .frame(maxWidth: .infinity, maxHeight: .infinity)
+                        } else {
+                            Text("Content for \(selectedBodyType.rawValue)")
+                                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                        }
+                    }
+                    .tabItem { Text("Body") }
+                    .tag(0)
+
                     Text("Params").tabItem { Text("Params") }.tag(1)
                     Text("Headers").tabItem { Text("Headers") }.tag(2)
                 }
