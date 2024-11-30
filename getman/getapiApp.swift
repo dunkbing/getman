@@ -1,6 +1,6 @@
 //
 //  getapiApp.swift
-//  getapi
+//  getman
 //
 //  Created by Bùi Đặng Bình on 29/11/24.
 //
@@ -8,7 +8,7 @@
 import SwiftUI
 
 @main
-struct getapiApp: App {
+struct getmanApp: App {
     var body: some Scene {
         WindowGroup {
             ContentView()

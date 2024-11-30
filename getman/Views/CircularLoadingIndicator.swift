@@ -1,6 +1,6 @@
 //
 //  CircularLoadingIndicator.swift
-//  getapi
+//  getman
 //
 //  Created by Bùi Đặng Bình on 30/11/24.
 //

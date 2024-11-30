@@ -56,19 +56,43 @@ struct SidebarView: View {
 
     var body: some View {
         VStack {
-            List(selection: $selectedRequest) {
-                ForEach(requests) { request in
-                    HStack {
-                        Text(request.method)
-                            .font(.caption)
-                            .foregroundColor(.gray)
-                        Text(request.name)
+            if requests.isEmpty {
+                VStack(spacing: 4) {
+                    Text("No Requests")
+                        .font(.title2)
+                        .padding(.bottom, 2)
+                    Text("New Request (⌘ N)")
+                        .font(.subheadline)
+                    Text("New Folder (⌘ ⇧ N)")
+                        .font(.subheadline)
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .cornerRadius(8)
+                .shadow(radius: 4)
+                .padding()
+            } else {
+                List(selection: $selectedRequest) {
+                    ForEach(requests) { request in
+                        HStack {
+                            Text(request.method)
+                                .font(.caption)
+                                .foregroundColor(.gray)
+                            Text(request.name)
+                        }
                     }
                 }
             }
-            TextField("Search requests...", text: $searchText)
-                .textFieldStyle(RoundedBorderTextFieldStyle())
+            HStack {
+                ZStack(alignment: .leading) {
+                    Image(systemName: "magnifyingglass")
+                        .foregroundColor(.gray)
+
+                    TextField("Search requests", text: $searchText)
+                        .textFieldStyle(RoundedBorderTextFieldStyle())
+                        .padding(.leading, 20)
+                }
                 .padding()
+            }
         }
     }
 }
@@ -80,7 +104,7 @@ struct RequestResponseView: View {
     @State private var selectedResponseTab = 0
     @State private var selectedMethod = "GET"
     @State private var response: APIResponse?
-    @State private var statusText = "connecting - 0s - 0B"
+    @State private var statusText = ""
     @State private var isLoading = false
     @State private var isSending = false
     @State private var task: URLSessionTask?
