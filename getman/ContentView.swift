@@ -1,38 +1,59 @@
 import Combine
 import SwiftUI
 
+struct TabItem: Identifiable, Equatable {
+    let id = UUID()
+    let request: APIRequest
+    var title: String
+
+    static func == (lhs: TabItem, rhs: TabItem) -> Bool {
+        lhs.id == rhs.id
+    }
+}
+
 struct ContentView: View {
     @State private var isSidebarVisible = true
     @State private var requests: [APIRequest] = []
     @State private var searchText = ""
-    @State private var selectedRequest: APIRequest?
+    @State private var tabs: [TabItem] = []
+    @State private var selectedTabId: UUID?
 
     var body: some View {
         HSplitView {
             if isSidebarVisible {
                 SidebarView(
-                    requests: $requests, searchText: $searchText, selectedRequest: $selectedRequest
+                    requests: $requests,
+                    searchText: $searchText,
+                    tabs: $tabs,
+                    selectedTabId: $selectedTabId
                 )
                 .frame(minWidth: 200, maxWidth: 300)
-                .transition(.move(edge: .leading))
-                .animation(.default, value: isSidebarVisible)
             }
 
-            if let selectedRequest = selectedRequest {
-                RequestResponseView(request: selectedRequest)
-            } else {
+            if tabs.isEmpty {
                 WelcomeView {
-                    let newRequest = APIRequest.new()
-                    requests.append(newRequest)
-                    selectedRequest = newRequest
+                    createNewRequest()
+                }
+            } else {
+                TabView(selection: $selectedTabId) {
+                    ForEach(tabs) { tab in
+                        RequestResponseView(request: tab.request)
+                            .tabItem {
+                                HStack {
+                                    Text(tab.title)
+                                    Button(action: { closeTab(tab) }) {
+                                        Image(systemName: "xmark")
+                                    }
+                                }
+                            }
+                            .tag(tab.id)
+                    }
                 }
             }
         }
         .toolbar {
             ToolbarItemGroup(placement: .navigation) {
-                Button(action: {
-                    isSidebarVisible.toggle()
-                }) {
+                Button(action: { isSidebarVisible.toggle() }) {
                     Image(systemName: isSidebarVisible ? "sidebar.left" : "sidebar.right")
                 }
                 Button(action: createNewRequest) {
@@ -45,32 +66,63 @@ struct ContentView: View {
     private func createNewRequest() {
         let newRequest = APIRequest.new()
         requests.append(newRequest)
-        selectedRequest = newRequest
+        let newTab = TabItem(request: newRequest, title: "New Request")
+        tabs.append(newTab)
+        selectedTabId = newTab.id
+    }
+
+    private func closeTab(_ tab: TabItem) {
+        if let index = tabs.firstIndex(of: tab) {
+            tabs.remove(at: index)
+            if selectedTabId == tab.id {
+                selectedTabId = tabs.last?.id
+            }
+        }
     }
 }
 
 struct SidebarView: View {
     @Binding var requests: [APIRequest]
     @Binding var searchText: String
-    @Binding var selectedRequest: APIRequest?
+    @Binding var tabs: [TabItem]
+    @Binding var selectedTabId: UUID?
+
+    var filteredRequests: [APIRequest] {
+        if searchText.isEmpty {
+            return requests
+        }
+        return requests.filter { $0.name.localizedCaseInsensitiveContains(searchText) }
+    }
 
     var body: some View {
-        ZStack {
-            // Background blur effect
-            VisualEffectView(material: .sidebar, blendingMode: .behindWindow)
-                .ignoresSafeArea()
-
-            VStack(spacing: 0) {
-                if requests.isEmpty {
-                    EmptyStateView()
-                } else {
-                    RequestList(requests: $requests, selectedRequest: $selectedRequest)
-                        .background(Color.clear)
+        VStack(spacing: 0) {
+            if requests.isEmpty {
+                EmptyStateView()
+            } else {
+                List(filteredRequests) { request in
+                    RequestRow(request: request)
+                        .tag(request.id)
+                        .listRowBackground(
+                            tabs.first(where: { $0.request.id == request.id })?.id == selectedTabId
+                                ? Color.accentColor.opacity(0.2)
+                                : Color.clear
+                        )
+                        .onTapGesture {
+                            openRequest(request)
+                        }
                 }
-
-                Divider()
-                SearchBar(searchText: $searchText)
             }
+            SearchBar(searchText: $searchText)
+        }
+    }
+
+    private func openRequest(_ request: APIRequest) {
+        if let existingTab = tabs.first(where: { $0.request.id == request.id }) {
+            selectedTabId = existingTab.id
+        } else {
+            let newTab = TabItem(request: request, title: request.name)
+            tabs.append(newTab)
+            selectedTabId = newTab.id
         }
     }
 }
@@ -93,7 +145,8 @@ struct EmptyStateView: View {
 
 struct RequestList: View {
     @Binding var requests: [APIRequest]
-    @Binding var selectedRequest: APIRequest?
+    @Binding var selectedTab: TabItem?
+    @Binding var tabs: [TabItem]
 
     var body: some View {
         ScrollView {
@@ -101,12 +154,19 @@ struct RequestList: View {
                 ForEach(requests) { request in
                     RequestRow(request: request)
                         .background(
-                            selectedRequest == request
+                            selectedTab?.request.id == request.id
                                 ? Color.accentColor.opacity(0.2) : Color.clear
                         )
                         .contentShape(Rectangle())
                         .onTapGesture {
-                            selectedRequest = request
+                            if let existingTab = tabs.first(where: { $0.request.id == request.id })
+                            {
+                                selectedTab = existingTab
+                            } else {
+                                let newTab = TabItem(request: request, title: request.name)
+                                tabs.append(newTab)
+                                selectedTab = newTab
+                            }
                         }
                 }
             }
