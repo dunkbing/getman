@@ -84,30 +84,42 @@ struct CustomTabBar: View {
     @Binding var selectedTabId: UUID?
 
     var body: some View {
-        ScrollView(.horizontal, showsIndicators: false) {
-            LazyHStack(spacing: 8) {
-                ForEach(tabs, id: \.id) { tab in
-                    Button(action: {
-                        selectedTabId = tab.id
-                    }) {
-                        HStack {
-                            Text(tab.title)
-                            Button(action: { closeTab(tab) }) {
-                                Image(systemName: "xmark")
+        ScrollViewReader { proxy in
+            ScrollView(.horizontal, showsIndicators: false) {
+                LazyHStack(spacing: 8) {
+                    ForEach(tabs, id: \.id) { tab in
+                        Button(action: {
+                            selectedTabId = tab.id
+                        }) {
+                            HStack {
+                                Text(tab.title)
+                                Button(action: { closeTab(tab) }) {
+                                    Image(systemName: "xmark")
+                                }
+                                .buttonStyle(BorderlessButtonStyle())
                             }
-                            .buttonStyle(BorderlessButtonStyle())
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 4)
+                            .background(
+                                selectedTabId == tab.id
+                                    ? Color.accentColor.opacity(0.2) : Color.clear
+                            )
+                            .cornerRadius(8)
                         }
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 4)
-                        .background(
-                            selectedTabId == tab.id ? Color.accentColor.opacity(0.2) : Color.clear
-                        )
-                        .cornerRadius(8)
+                        .id(tab.id)
+                        .buttonStyle(BorderlessButtonStyle())
                     }
-                    .buttonStyle(BorderlessButtonStyle())
                 }
+                .padding(.horizontal, 8)
             }
             .padding(.horizontal, 8)
+            .onChange(of: selectedTabId) { id in
+                if let id = id {
+                    withAnimation {
+                        proxy.scrollTo(id, anchor: .center)
+                    }
+                }
+            }
         }
     }
 
