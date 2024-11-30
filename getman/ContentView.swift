@@ -35,19 +35,17 @@ struct ContentView: View {
                     createNewRequest()
                 }
             } else {
-                TabView(selection: $selectedTabId) {
-                    ForEach(tabs) { tab in
-                        RequestResponseView(request: tab.request)
-                            .tabItem {
-                                HStack {
-                                    Text(tab.title)
-                                    Button(action: { closeTab(tab) }) {
-                                        Image(systemName: "xmark")
-                                    }
-                                }
-                            }
-                            .tag(tab.id)
+                ZStack(alignment: .topLeading) {
+                    TabView(selection: $selectedTabId) {
+                        ForEach(tabs) { tab in
+                            RequestResponseView(request: tab.request)
+                                .tag(tab.id)
+                        }
                     }
+
+                    CustomTabBar(tabs: $tabs, selectedTabId: $selectedTabId)
+                        .frame(height: 40)
+                        .background(Color(NSColor.windowBackgroundColor))
                 }
             }
         }
@@ -69,6 +67,48 @@ struct ContentView: View {
         let newTab = TabItem(request: newRequest, title: "New Request")
         tabs.append(newTab)
         selectedTabId = newTab.id
+    }
+
+    private func closeTab(_ tab: TabItem) {
+        if let index = tabs.firstIndex(of: tab) {
+            tabs.remove(at: index)
+            if selectedTabId == tab.id {
+                selectedTabId = tabs.last?.id
+            }
+        }
+    }
+}
+
+struct CustomTabBar: View {
+    @Binding var tabs: [TabItem]
+    @Binding var selectedTabId: UUID?
+
+    var body: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            LazyHStack(spacing: 8) {
+                ForEach(tabs, id: \.id) { tab in
+                    Button(action: {
+                        selectedTabId = tab.id
+                    }) {
+                        HStack {
+                            Text(tab.title)
+                            Button(action: { closeTab(tab) }) {
+                                Image(systemName: "xmark")
+                            }
+                            .buttonStyle(BorderlessButtonStyle())
+                        }
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 4)
+                        .background(
+                            selectedTabId == tab.id ? Color.accentColor.opacity(0.2) : Color.clear
+                        )
+                        .cornerRadius(8)
+                    }
+                    .buttonStyle(BorderlessButtonStyle())
+                }
+            }
+            .padding(.horizontal, 8)
+        }
     }
 
     private func closeTab(_ tab: TabItem) {
