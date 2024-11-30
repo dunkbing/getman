@@ -55,44 +55,98 @@ struct SidebarView: View {
     @Binding var selectedRequest: APIRequest?
 
     var body: some View {
-        VStack {
-            if requests.isEmpty {
-                VStack(spacing: 4) {
-                    Text("No Requests")
-                        .font(.title2)
-                        .padding(.bottom, 2)
-                    Text("New Request (⌘ N)")
-                        .font(.subheadline)
-                    Text("New Folder (⌘ ⇧ N)")
-                        .font(.subheadline)
-                }
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .cornerRadius(8)
-                .shadow(radius: 4)
-                .padding()
-            } else {
-                List(selection: $selectedRequest) {
-                    ForEach(requests) { request in
-                        HStack {
-                            Text(request.method)
-                                .font(.caption)
-                                .foregroundColor(.gray)
-                            Text(request.name)
-                        }
-                    }
-                }
-            }
-            HStack {
-                ZStack(alignment: .leading) {
-                    Image(systemName: "magnifyingglass")
-                        .foregroundColor(.gray)
+        ZStack {
+            // Background blur effect
+            VisualEffectView(material: .sidebar, blendingMode: .behindWindow)
+                .ignoresSafeArea()
 
-                    TextField("Search requests", text: $searchText)
-                        .textFieldStyle(RoundedBorderTextFieldStyle())
-                        .padding(.leading, 20)
+            VStack(spacing: 0) {
+                if requests.isEmpty {
+                    EmptyStateView()
+                } else {
+                    RequestList(requests: $requests, selectedRequest: $selectedRequest)
+                        .background(Color.clear)
                 }
-                .padding()
+
+                Divider()
+                SearchBar(searchText: $searchText)
             }
+        }
+    }
+}
+
+struct EmptyStateView: View {
+    var body: some View {
+        VStack(spacing: 4) {
+            Text("No Requests")
+                .font(.title2)
+                .padding(.bottom, 2)
+            Text("New Request (⌘ N)")
+                .font(.subheadline)
+            Text("New Folder (⌘ ⇧ N)")
+                .font(.subheadline)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .padding()
+    }
+}
+
+struct RequestList: View {
+    @Binding var requests: [APIRequest]
+    @Binding var selectedRequest: APIRequest?
+
+    var body: some View {
+        ScrollView {
+            LazyVStack(alignment: .leading, spacing: 2) {
+                ForEach(requests) { request in
+                    RequestRow(request: request)
+                        .background(
+                            selectedRequest == request
+                                ? Color.accentColor.opacity(0.2) : Color.clear
+                        )
+                        .contentShape(Rectangle())
+                        .onTapGesture {
+                            selectedRequest = request
+                        }
+                }
+            }
+            .padding(.vertical, 4)
+        }
+    }
+}
+
+struct RequestRow: View {
+    let request: APIRequest
+
+    var body: some View {
+        HStack {
+            Text(request.method)
+                .font(.caption)
+                .foregroundColor(.gray)
+            Text(request.name)
+        }
+        .padding(.horizontal)
+        .padding(.vertical, 4)
+    }
+}
+
+struct SearchBar: View {
+    @Binding var searchText: String
+
+    var body: some View {
+        HStack {
+            ZStack(alignment: .leading) {
+                Image(systemName: "magnifyingglass")
+                    .foregroundColor(.gray)
+                    .padding(.leading, 8)
+                TextField("Search requests", text: $searchText)
+                    .textFieldStyle(PlainTextFieldStyle())
+                    .padding(.leading, 28)
+            }
+            .frame(height: 28)
+            .background(Color(nsColor: .controlBackgroundColor))
+            .cornerRadius(6)
+            .padding(8)
         }
     }
 }
