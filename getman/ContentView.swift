@@ -44,8 +44,9 @@ struct ContentView: View {
                     }
 
                     CustomTabBar(tabs: $tabs, selectedTabId: $selectedTabId)
-                        .frame(height: 40)
+                        .frame(height: 30)
                         .background(Color(NSColor.windowBackgroundColor))
+                        .border(Color.gray.opacity(0.3), width: 0.5, edges: [.bottom])
                 }
             }
         }
@@ -88,26 +89,13 @@ struct CustomTabBar: View {
             ScrollView(.horizontal, showsIndicators: false) {
                 LazyHStack(spacing: 8) {
                     ForEach(tabs, id: \.id) { tab in
-                        Button(action: {
-                            selectedTabId = tab.id
-                        }) {
-                            HStack {
-                                Text(tab.title)
-                                Button(action: { closeTab(tab) }) {
-                                    Image(systemName: "xmark")
-                                }
-                                .buttonStyle(BorderlessButtonStyle())
-                            }
-                            .padding(.horizontal, 8)
-                            .padding(.vertical, 4)
-                            .background(
-                                selectedTabId == tab.id
-                                    ? Color.accentColor.opacity(0.2) : Color.clear
-                            )
-                            .cornerRadius(8)
-                        }
+                        TabItemView(
+                            tab: tab,
+                            isSelected: selectedTabId == tab.id,
+                            onSelect: { selectedTabId = tab.id },
+                            onClose: { closeTab(tab) }
+                        )
                         .id(tab.id)
-                        .buttonStyle(BorderlessButtonStyle())
                     }
                 }
                 .padding(.horizontal, 8)
@@ -129,6 +117,53 @@ struct CustomTabBar: View {
             if selectedTabId == tab.id {
                 selectedTabId = tabs.last?.id
             }
+        }
+    }
+}
+
+extension View {
+    func border(_ color: Color, width: CGFloat, edges: Edge.Set) -> some View {
+        overlay(
+            VStack {
+                if edges.contains(.bottom) {
+                    Spacer()
+                    color.frame(height: width)
+                }
+            }
+        )
+    }
+}
+
+struct TabItemView: View {
+    let tab: TabItem
+    let isSelected: Bool
+    let onSelect: () -> Void
+    let onClose: () -> Void
+    @State private var isHovered = false
+
+    var body: some View {
+        Button(action: onSelect) {
+            HStack {
+                Spacer().frame(width: 14)
+                Text(tab.title)
+                Button(action: onClose) {
+                    if isHovered {
+                        Image(systemName: "xmark")
+                            .frame(width: 14)
+                    } else {
+                        Spacer().frame(width: 14)
+                    }
+                }
+                .buttonStyle(BorderlessButtonStyle())
+            }
+            .padding(.horizontal, 8)
+            .padding(.vertical, 4)
+            .background(isSelected ? Color.accentColor.opacity(0.2) : Color.clear)
+            .cornerRadius(8)
+        }
+        .buttonStyle(BorderlessButtonStyle())
+        .onHover { hovering in
+            isHovered = hovering
         }
     }
 }
