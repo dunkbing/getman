@@ -2,9 +2,13 @@ import Combine
 import SwiftUI
 
 struct TabItem: Identifiable, Equatable {
-    let id = UUID()
+    let id: UUID
     let request: APIRequest
     var title: String
+
+    static func new(request: APIRequest, title: String) -> TabItem {
+        TabItem(id: request.id, request: request, title: title)
+    }
 
     static func == (lhs: TabItem, rhs: TabItem) -> Bool {
         lhs.id == rhs.id
@@ -29,14 +33,17 @@ struct ContentView: View {
     var body: some View {
         HSplitView {
             if isSidebarVisible {
-                List(selection: $selectionIds) {
-                    Node(
-                        parent: appModel.bootstrapRoot,
-                        onRequestSelected: { req in
+                if appModel.isEmpty {
+                    EmptyStateView()
+                } else {
+                    List(selection: $selectionIds) {
+                        Node(parent: appModel.bootstrapRoot) { req in
                             selectedReqId = req.id
-                        })
+                            openRequest(req)
+                        }
+                    }
+                    .listStyle(.sidebar)
                 }
-                .listStyle(.sidebar)
             }
 
             if tabs.isEmpty {
@@ -59,7 +66,7 @@ struct ContentView: View {
                 }
             }
         }
-        .onChange(of: selectedReqId) { newId in
+        .onChange(of: selectedReqId) { _, newId in
             if let selectedReq = tabs.first(where: { $0.request.id == newId }) {
                 let requestId = selectedReq.id
                 appModel.selectedRequestId = requestId
@@ -77,12 +84,22 @@ struct ContentView: View {
         }
     }
 
+    private func openRequest(_ request: APIRequest) {
+        if let existingTab = tabs.first(where: { $0.request.id == request.id }) {
+            selectedReqId = existingTab.id
+        } else {
+            let newTab = TabItem.new(request: request, title: request.name)
+            tabs.append(newTab)
+            selectedReqId = newTab.id
+        }
+    }
+
     private func createNewRequest() {
         let newRequest = APIRequest.new()
         let name = "New Request"
         let item = Item(name, request: newRequest)
         appModel.addChild(item: item)
-        let newTab = TabItem(request: newRequest, title: name)
+        let newTab = TabItem.new(request: newRequest, title: name)
         tabs.append(newTab)
         selectedReqId = newRequest.id
     }
@@ -118,8 +135,8 @@ struct CustomTabBar: View {
                 .padding(.horizontal, 8)
             }
             .padding(.horizontal, 8)
-            .onChange(of: selectedReqId) { id in
-                if let id = id {
+            .onChange(of: selectedReqId) { oldValue, newValue in
+                if let id = newValue {
                     withAnimation {
                         proxy.scrollTo(id, anchor: .center)
                     }

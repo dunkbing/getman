@@ -12,6 +12,7 @@ struct APIRequest: Identifiable, Hashable {
     var method: String
     var url: String
     var name: String
+
     static func new() -> APIRequest {
         APIRequest(method: "GET", url: "", name: "New HTTP Request")
     }

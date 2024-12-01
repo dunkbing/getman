@@ -17,16 +17,23 @@ class AppModel: ObservableObject {
         items.forEach { item in
             bootstrapRoot.adopt(child: item)
         }
+        isEmpty = bootstrapRoot.children?.isEmpty ?? true
     }
 
     func addChild(item: Item) {
         bootstrapRoot.adopt(child: item)
+        updateIsEmpty()
     }
 
     @Published var itemsAtTopLevel: [Item]
     @Published var isDragging: Bool = false
     @Published var bootstrapRoot: Item
     @Published var selectedRequestId: UUID?
+    @Published var isEmpty: Bool = true
+
+    private func updateIsEmpty() {
+        isEmpty = bootstrapRoot.children?.isEmpty ?? true
+    }
 
     func providerEncode(id: Item.Id) -> NSItemProvider {
         NSItemProvider(object: id.uuidString as NSString)
@@ -109,7 +116,7 @@ class AppModel: ObservableObject {
             return
         }
 
-        /// Remove any items not in the system
+        // Remove any items not in the system
         let possibleMoversExtant: [Item] = itemsFind(ids: Set(possibleMovers))
 
         // Remove any items that already have this folder as their parent.
@@ -131,6 +138,7 @@ class AppModel: ObservableObject {
                 notMovedByOthers.forEach { i in
                     tgtFolder.adopt(child: i)
                 }
+                self.updateIsEmpty()
                 self.objectWillChange.send()
             }
         }
@@ -257,41 +265,6 @@ class Item: ObservableObject, Identifiable, Equatable {
     }
 }
 
-extension Parent: DropDelegate {
-    func dropEntered(info: DropInfo) {
-        isTargeted = true
-    }
-
-    func dropExited(info: DropInfo) {
-        isTargeted = false
-    }
-
-    func validateDrop(info: DropInfo) -> Bool {
-        info.itemProviders(for: [.text]).count > 0 ? true : false
-        /// All we can do is check we've got an accepted type.
-        /// Cannot do any other validation here bc the decoding happens asynchronously and we therefore do not have the ability
-        /// to inspect the payload more thoroughly.
-    }
-
-    func performDrop(info: DropInfo) -> Bool {
-        info.itemProviders(for: [.text])
-            .forEach { p in
-                _ = p.loadObject(ofClass: String.self) { text, _ in
-                    appModel.providerDecode(loadedString: text)
-                        .forEach { itemDropped in
-                            DispatchQueue.main.async {
-                                print("On drop parent = \(item.name) adopting \(itemDropped.name)")
-                                withAnimation {
-                                    item.adopt(child: itemDropped)
-                                }
-                            }
-                        }
-                }
-            }
-        return true
-    }
-}
-
 struct Node: View {
     @EnvironmentObject var appModel: AppModel
     @StateObject var parent: Item
@@ -301,14 +274,20 @@ struct Node: View {
         ForEach(parent.children ?? []) { (childItem: Item) in
             Group {
                 if childItem.isFolder == false {
+                    let req = childItem.request
                     Label(childItem.name, systemImage: "doc.text")
+                        .padding(.vertical, 2.5)
+                        .padding(.leading, 3)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .background(req?.id == appModel.selectedRequestId ? .red : .clear)
                         .onDrag {
                             appModel.providerEncode(id: childItem.id)
                         }
                         .onTapGesture {
                             if let request = childItem.request {
+                                print(
+                                    "select request", request.id, appModel.selectedRequestId ?? "")
                                 onRequestSelected(request)
-                                print("click", request.id)
                                 appModel.selectedRequestId = request.id
                             }
                         }
@@ -316,55 +295,70 @@ struct Node: View {
                     Parent(item: childItem, onRequestSelected: onRequestSelected)
                 }
             }
-        }
-        .onInsert(of: [.text]) { edgeIdx, providers in
-            print(
-                "Got edgeIdx = \(edgeIdx), parent = \(parent.name) provider count = \(providers.count)"
-            )
-            providers.forEach { p in
-                _ = p.loadObject(ofClass: String.self) { text, _ in
-                    appModel.providerDecode(loadedString: text)
-                        .forEach { item in
-                            DispatchQueue.main.async {
-                                withAnimation {
-                                    print(
-                                        "onInsert - New parent = \(parent.name) adopting \(item.name)"
-                                    )
-                                    self.parent.adopt(child: item)
-                                }
-                            }
-                        }
-                }
-            }
+            .selectionDisabled()
         }
     }
 }
 
-struct Parent: View {
+struct Parent: View, DropDelegate {
     @EnvironmentObject var appModel: AppModel
     @ObservedObject var item: Item
     let onRequestSelected: (APIRequest) -> Void
+
+    @State private var isExpanded: Bool = false
+    @State internal var isTargeted: Bool = false
 
     var body: some View {
         DisclosureGroup(isExpanded: $isExpanded) {
             Node(parent: item, onRequestSelected: onRequestSelected)
         } label: {
             Group {
-                if item.parent == nil {  // Has no parent
+                if item.parent == nil {
                     Label(item.name, systemImage: "folder.badge.questionmark")
                 } else {
                     Label(item.name, systemImage: "folder")
+                        .background(isTargeted ? Color.accentColor.opacity(0.2) : Color.clear)
                         .onDrag {
                             appModel.providerEncode(id: item.id)
                         }
                 }
             }
-            .onDrop(of: [.text], delegate: self)
         }
-        .onTapGesture {
-        }
+        .onDrop(of: [.text], delegate: self)
     }
 
-    @State internal var isTargeted: Bool = false
-    @State private var isExpanded: Bool = false
+    func dropEntered(info: DropInfo) {
+        isTargeted = true
+    }
+
+    func dropExited(info: DropInfo) {
+        isTargeted = false
+    }
+
+    func validateDrop(info: DropInfo) -> Bool {
+        return info.hasItemsConforming(to: [.text])
+    }
+
+    func performDrop(info: DropInfo) -> Bool {
+        let providers = info.itemProviders(for: [.text])
+
+        providers.forEach { provider in
+            _ = provider.loadObject(ofClass: String.self) { (string, error) in
+                DispatchQueue.main.async {
+                    let itemsToMove = appModel.providerDecode(loadedString: string)
+                    for itemToMove in itemsToMove {
+                        // Check if the move is valid
+                        if itemToMove.id != item.id && !item.isDescendant(of: itemToMove) {
+                            withAnimation {
+                                item.adopt(child: itemToMove)
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        isTargeted = false
+        return true
+    }
 }
