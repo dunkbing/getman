@@ -33,17 +33,27 @@ struct ContentView: View {
     var body: some View {
         HSplitView {
             if isSidebarVisible {
-                if appModel.isEmpty {
-                    EmptyStateView()
-                } else {
-                    List(selection: $selectionIds) {
-                        Node(parent: appModel.bootstrapRoot) { req in
-                            selectedReqId = req.id
-                            openRequest(req)
+                ZStack {
+                    VisualEffectView(material: .sidebar, blendingMode: .behindWindow)
+
+                    Group {
+                        if appModel.isEmpty {
+                            EmptyStateView()
+                        } else {
+                            VStack {
+                                List(selection: $selectionIds) {
+                                    Node(parent: appModel.bootstrapRoot) { req in
+                                        selectedReqId = req.id
+                                        openRequest(req)
+                                    }
+                                }
+                                .listStyle(.sidebar)
+                                SearchBar(searchText: $searchText)
+                            }
                         }
                     }
-                    .listStyle(.sidebar)
                 }
+                .frame(minWidth: 200, maxWidth: 300)
             }
 
             if tabs.isEmpty {
