@@ -18,7 +18,6 @@ struct TabItem: Identifiable, Equatable {
 struct ContentView: View {
     @EnvironmentObject var appModel: AppModel
 
-    @State private var isSidebarVisible = true
     @State private var searchText = ""
     @State private var tabs: [TabItem] = []
     @State private var selectedReqId: UUID?
@@ -31,31 +30,29 @@ struct ContentView: View {
     }
 
     var body: some View {
-        HSplitView {
-            if isSidebarVisible {
-                ZStack {
-                    VisualEffectView(material: .sidebar, blendingMode: .behindWindow)
+        NavigationSplitView {
+            ZStack {
+                VisualEffectView(material: .sidebar, blendingMode: .behindWindow)
 
-                    Group {
-                        if appModel.isEmpty {
-                            EmptyStateView()
-                        } else {
-                            VStack {
-                                List(selection: $selectionIds) {
-                                    Node(parent: appModel.bootstrapRoot) { req in
-                                        selectedReqId = req.id
-                                        openRequest(req)
-                                    }
+                Group {
+                    if appModel.isEmpty {
+                        EmptyStateView()
+                    } else {
+                        VStack {
+                            List(selection: $selectionIds) {
+                                Node(parent: appModel.bootstrapRoot) { req in
+                                    selectedReqId = req.id
+                                    openRequest(req)
                                 }
-                                .listStyle(.sidebar)
-                                SearchBar(searchText: $searchText)
                             }
+                            .listStyle(.sidebar)
+                            SearchBar(searchText: $searchText)
                         }
                     }
                 }
-                .frame(minWidth: 200, maxWidth: 300)
             }
-
+            .frame(minWidth: 200, maxWidth: 300)
+        } detail: {
             if tabs.isEmpty {
                 WelcomeView {
                     createNewRequest()
@@ -78,15 +75,11 @@ struct ContentView: View {
         }
         .onChange(of: selectedReqId) { _, newId in
             if let selectedReq = tabs.first(where: { $0.request.id == newId }) {
-                let requestId = selectedReq.id
-                appModel.selectedRequestId = requestId
+                appModel.selectedRequestId = selectedReq.id
             }
         }
         .toolbar {
             ToolbarItemGroup(placement: .navigation) {
-                Button(action: { isSidebarVisible.toggle() }) {
-                    Image(systemName: isSidebarVisible ? "sidebar.left" : "sidebar.right")
-                }
                 Button(action: createNewRequest) {
                     Image(systemName: "plus")
                 }
