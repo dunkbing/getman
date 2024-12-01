@@ -276,25 +276,34 @@ struct Node: View {
                 if childItem.isFolder == false {
                     let req = childItem.request
                     Label(childItem.name, systemImage: "doc.text")
-                        .padding(.vertical, 2.5)
-                        .padding(.leading, 3)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .background(req?.id == appModel.selectedRequestId ? .red : .clear)
-                        .onDrag {
-                            appModel.providerEncode(id: childItem.id)
-                        }
+                        .padding(.vertical, 3)
+                        .padding(.leading, 4)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
+                        .background(
+                            RoundedRectangle(cornerRadius: 6)
+                                .fill(
+                                    req?.id == appModel.selectedRequestId
+                                        ? Color.accentColor.opacity(0.2) : Color.clear)
+                        )
+                        .contentShape(Rectangle())
                         .onTapGesture {
                             if let request = childItem.request {
-                                print(
-                                    "select request", request.id, appModel.selectedRequestId ?? "")
                                 onRequestSelected(request)
                                 appModel.selectedRequestId = request.id
                             }
                         }
+                        .animation(
+                            .easeInOut(duration: 0.2), value: req?.id == appModel.selectedRequestId
+                        )
+                        .onDrag {
+                            appModel.providerEncode(id: childItem.id)
+                        }
+
                 } else {
                     Parent(item: childItem, onRequestSelected: onRequestSelected)
                 }
             }
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
             .selectionDisabled()
         }
     }
