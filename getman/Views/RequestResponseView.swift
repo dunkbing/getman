@@ -6,6 +6,29 @@
 //
 
 import SwiftUI
+import SwiftyMonaco
+
+struct MonacoEditorView: View {
+    @Binding var text: String
+
+    var body: some View {
+        SwiftyMonaco(text: $text)
+            .syntaxHighlight(.systemVerilog)
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+}
+
+struct LazyView<Content: View>: View {
+    let build: () -> Content
+
+    init(_ build: @autoclosure @escaping () -> Content) {
+        self.build = build
+    }
+
+    var body: Content {
+        build()
+    }
+}
 
 struct RequestResponseView: View {
     let request: APIRequest
@@ -19,6 +42,10 @@ struct RequestResponseView: View {
     @State private var isSending = false
     @State private var task: URLSessionTask?
     @State private var selectedBodyType = BodyType.urlEncoded
+    @State private var bodyContent = ""
+    @State private var keyValuePairs: [KeyValuePair] = [
+        KeyValuePair(key: "", value: "")
+    ]
 
     enum BodyType: String, CaseIterable {
         case urlEncoded = "Url Encoded"
@@ -36,6 +63,13 @@ struct RequestResponseView: View {
 
         var urlRequest = URLRequest(url: url)
         urlRequest.httpMethod = selectedMethod
+
+        if selectedBodyType == .json || selectedBodyType == .graphQL || selectedBodyType == .xml
+            || selectedBodyType == .other
+        {
+            urlRequest.httpBody = bodyContent.data(using: .utf8)
+            urlRequest.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        }
 
         let startTime = Date()
         isLoading = true
@@ -72,6 +106,15 @@ struct RequestResponseView: View {
         isSending = false
         isLoading = false
         statusText = "Request cancelled"
+    }
+
+    private var isTextContentType: Bool {
+        switch selectedBodyType {
+        case .json, .graphQL, .xml, .other:
+            return true
+        default:
+            return false
+        }
     }
 
     var body: some View {
@@ -122,6 +165,7 @@ struct RequestResponseView: View {
                         }
                     }
                     .buttonStyle(.borderedProminent)
+                    .tint(Color.accentColor)
                 }
 
                 TabView(selection: $selectedInputTab) {
@@ -148,20 +192,37 @@ struct RequestResponseView: View {
                         }
                         .fixedSize()
 
-                        if selectedBodyType == .noBody {
-                            VStack {
-                                Image(systemName: "nosign")
-                                    .resizable()
-                                    .frame(width: 50, height: 50)
-                                    .foregroundColor(.gray)
-                                Text("No Body")
-                                    .font(.title)
-                                    .foregroundColor(.gray)
-                            }
-                            .frame(maxWidth: .infinity, maxHeight: .infinity)
-                        } else {
-                            Text("Content for \(selectedBodyType.rawValue)")
+                        ZStack {
+                            // Main content
+                            if selectedBodyType == .urlEncoded || selectedBodyType == .multiPart {
+                                KeyValueEditor(
+                                    pairs: $keyValuePairs,
+                                    isMultiPart: selectedBodyType == .multiPart
+                                )
+                            } else if selectedBodyType == .noBody {
+                                VStack {
+                                    Image(systemName: "nosign")
+                                        .resizable()
+                                        .frame(width: 50, height: 50)
+                                        .foregroundColor(.gray)
+                                    Text("No Body")
+                                        .font(.title)
+                                        .foregroundColor(.gray)
+                                }
                                 .frame(maxWidth: .infinity, maxHeight: .infinity)
+                            } else if selectedBodyType == .json || selectedBodyType == .graphQL
+                                || selectedBodyType == .xml || selectedBodyType == .other
+                            {
+                                Color.clear  // Placeholder
+                            } else {
+                                Text("Content for \(selectedBodyType.rawValue)")
+                                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                            }
+
+                            // Monaco editor is always present but only visible when needed
+                            LazyView(MonacoEditorView(text: $bodyContent))
+                                .opacity(isTextContentType ? 1 : 0)
+                                .allowsHitTesting(isTextContentType)
                         }
                     }
                     .tabItem { Text("Body") }

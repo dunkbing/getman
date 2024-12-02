@@ -6,6 +6,10 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		C3CF702E2CFD81D400416753 /* SwiftyMonaco in Frameworks */ = {isa = PBXBuildFile; productRef = C3CF702D2CFD81D400416753 /* SwiftyMonaco */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXFileReference section */
 		C35BCE192CF9A5080028B473 /* getman.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = getman.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
@@ -23,6 +27,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				C3CF702E2CFD81D400416753 /* SwiftyMonaco in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -33,6 +38,7 @@
 			isa = PBXGroup;
 			children = (
 				C35BCE1B2CF9A5080028B473 /* getman */,
+				C3CF70072CFD783200416753 /* Frameworks */,
 				C35BCE1A2CF9A5080028B473 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -43,6 +49,13 @@
 				C35BCE192CF9A5080028B473 /* getman.app */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		C3CF70072CFD783200416753 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Frameworks;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -65,6 +78,7 @@
 			);
 			name = getman;
 			packageProductDependencies = (
+				C3CF702D2CFD81D400416753 /* SwiftyMonaco */,
 			);
 			productName = getapi;
 			productReference = C35BCE192CF9A5080028B473 /* getman.app */;
@@ -94,6 +108,9 @@
 			);
 			mainGroup = C35BCE102CF9A5080028B473;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				C3CF702C2CFD81D400416753 /* XCRemoteSwiftPackageReference "SwiftyMonaco" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = C35BCE1A2CF9A5080028B473 /* Products */;
 			projectDirPath = "";
@@ -327,6 +344,25 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		C3CF702C2CFD81D400416753 /* XCRemoteSwiftPackageReference "SwiftyMonaco" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/ICToolkit/SwiftyMonaco";
+			requirement = {
+				branch = main;
+				kind = branch;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		C3CF702D2CFD81D400416753 /* SwiftyMonaco */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = C3CF702C2CFD81D400416753 /* XCRemoteSwiftPackageReference "SwiftyMonaco" */;
+			productName = SwiftyMonaco;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = C35BCE112CF9A5080028B473 /* Project object */;
 }
