@@ -36,7 +36,7 @@ struct RequestResponseView: View {
     @State private var currentURL = ""
     @State private var selectedInputTab = 0
     @State private var selectedResponseTab = 0
-    @State private var selectedMethod: String
+    @State private var selectedMethod: HTTPMethod
     @State private var response: APIResponse?
     @State private var statusText = ""
     @State private var isLoading = false
@@ -69,7 +69,7 @@ struct RequestResponseView: View {
         guard let url = URL(string: currentURL) else { return }
 
         var urlRequest = URLRequest(url: url)
-        urlRequest.httpMethod = selectedMethod
+        urlRequest.httpMethod = selectedMethod.rawValue
 
         if selectedBodyType == .json || selectedBodyType == .graphQL || selectedBodyType == .xml
             || selectedBodyType == .other
@@ -130,14 +130,9 @@ struct RequestResponseView: View {
             VStack(spacing: 16) {
                 HStack {
                     Picker("", selection: $selectedMethod) {
-                        Text("GET").tag("GET")
-                        Text("POST").tag("POST")
-                        Text("PUT").tag("PUT")
-                        Text("PATCH").tag("PATCH")
-                        Text("DELETE").tag("DELETE")
-                        Text("OPTIONS").tag("OPTIONS")
-                        Text("QUERY").tag("QUERY")
-                        Text("HEAD").tag("HEAD")
+                        ForEach(HTTPMethod.allCases, id: \.self) { method in
+                            Text(method.rawValue).tag(method)
+                        }
                     }
                     .labelsHidden()
                     .fixedSize()

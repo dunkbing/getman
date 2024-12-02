@@ -270,36 +270,20 @@ struct Node: View {
     @StateObject var parent: Item
     let onRequestSelected: (APIRequest) -> Void
 
-    private func getMethodColor(_ method: String) -> Color {
-        switch method {
-        case "GET":
-            return .green
-        case "POST":
-            return .orange
-        case "PUT":
-            return .blue
-        case "DELETE":
-            return .red
-        case "PATCH":
-            return .purple
-        default:
-            return .gray
-        }
-    }
-
     var body: some View {
         ForEach(parent.children ?? []) { (childItem: Item) in
             Group {
                 if childItem.isFolder == false {
                     let req = childItem.request
-                    let method = req?.method ?? ""
+                    let method = req?.method ?? .GET
                     Label {
                         Text(childItem.name)
+                            .padding(.leading, 5)
                     } icon: {
-                        Text(method.uppercased())
+                        Text(method.rawValue)
                             .font(.caption)
                             .bold()
-                            .foregroundColor(getMethodColor(method))
+                            .foregroundColor(method.color)
                             .frame(minWidth: 40)
                             .padding(.leading, 5)
                     }
