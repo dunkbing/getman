@@ -270,35 +270,64 @@ struct Node: View {
     @StateObject var parent: Item
     let onRequestSelected: (APIRequest) -> Void
 
+    private func getMethodColor(_ method: String) -> Color {
+        switch method {
+        case "GET":
+            return .green
+        case "POST":
+            return .orange
+        case "PUT":
+            return .blue
+        case "DELETE":
+            return .red
+        case "PATCH":
+            return .purple
+        default:
+            return .gray
+        }
+    }
+
     var body: some View {
         ForEach(parent.children ?? []) { (childItem: Item) in
             Group {
                 if childItem.isFolder == false {
                     let req = childItem.request
-                    Label(childItem.name, systemImage: "doc.text")
-                        .padding(.vertical, 3)
-                        .padding(.leading, 4)
-                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
-                        .background(
-                            RoundedRectangle(cornerRadius: 6)
-                                .fill(
-                                    req?.id == appModel.selectedRequestId
-                                        ? Color.accentColor.opacity(0.2) : Color.clear)
-                        )
-                        .contentShape(Rectangle())
-                        .onTapGesture {
-                            if let request = childItem.request {
-                                onRequestSelected(request)
-                                appModel.selectedRequestId = request.id
-                            }
+                    let method = req?.method ?? ""
+                    Label {
+                        Text(childItem.name)
+                    } icon: {
+                        Text(method.uppercased())
+                            .font(.caption)
+                            .bold()
+                            .foregroundColor(getMethodColor(method))
+                            .frame(minWidth: 40)
+                            .padding(.leading, 5)
+                    }
+                    .padding(.vertical, 3)
+                    .padding(.leading, 4)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
+                    .background(
+                        RoundedRectangle(cornerRadius: 6)
+                            .fill(
+                                req?.id == appModel.selectedRequestId
+                                    ? Color.accentColor.opacity(0.2)
+                                    : Color.clear
+                            )
+                    )
+                    .contentShape(Rectangle())
+                    .onTapGesture {
+                        if let request = childItem.request {
+                            onRequestSelected(request)
+                            appModel.selectedRequestId = request.id
                         }
-                        .animation(
-                            .easeInOut(duration: 0.2), value: req?.id == appModel.selectedRequestId
-                        )
-                        .onDrag {
-                            appModel.providerEncode(id: childItem.id)
-                        }
-
+                    }
+                    .animation(
+                        .easeInOut(duration: 0.2),
+                        value: req?.id == appModel.selectedRequestId
+                    )
+                    .onDrag {
+                        appModel.providerEncode(id: childItem.id)
+                    }
                 } else {
                     Parent(item: childItem, onRequestSelected: onRequestSelected)
                 }

@@ -31,11 +31,12 @@ struct LazyView<Content: View>: View {
 }
 
 struct RequestResponseView: View {
-    let request: APIRequest
+    @Binding var request: APIRequest
+
     @State private var currentURL = ""
     @State private var selectedInputTab = 0
     @State private var selectedResponseTab = 0
-    @State private var selectedMethod = "GET"
+    @State private var selectedMethod: String
     @State private var response: APIResponse?
     @State private var statusText = ""
     @State private var isLoading = false
@@ -46,6 +47,12 @@ struct RequestResponseView: View {
     @State private var keyValuePairs: [KeyValuePair] = [
         KeyValuePair(key: "", value: "")
     ]
+
+    init(request: Binding<APIRequest>) {
+        self._request = request
+        self._selectedMethod = State(initialValue: request.wrappedValue.method)
+        self._currentURL = State(initialValue: request.wrappedValue.url)
+    }
 
     enum BodyType: String, CaseIterable {
         case urlEncoded = "Url Encoded"
@@ -134,6 +141,9 @@ struct RequestResponseView: View {
                     }
                     .labelsHidden()
                     .fixedSize()
+                    .onChange(of: selectedMethod) { _, newValue in
+                        request.method = newValue
+                    }
 
                     TextField(
                         "Enter URL", text: $currentURL,

@@ -46,8 +46,8 @@ struct ContentView: View {
             } else {
                 ZStack(alignment: .topLeading) {
                     TabView(selection: $selectedReqId) {
-                        ForEach(tabs) { tab in
-                            RequestResponseView(request: tab)
+                        ForEach($tabs) { $tab in
+                            RequestResponseView(request: $tab)
                                 .tag(tab.id)
                         }
                     }
