@@ -48,6 +48,8 @@ struct RequestResponseView: View {
         KeyValuePair(key: "", value: "")
     ]
 
+    @EnvironmentObject var appModel: AppModel
+
     init(request: Binding<APIRequest>) {
         self._request = request
         self._selectedMethod = State(initialValue: request.wrappedValue.method)
@@ -138,6 +140,7 @@ struct RequestResponseView: View {
                     .fixedSize()
                     .onChange(of: selectedMethod) { _, newValue in
                         request.method = newValue
+                        appModel.objectWillChange.send()
                     }
 
                     TextField(

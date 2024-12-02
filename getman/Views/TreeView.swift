@@ -268,6 +268,7 @@ class Item: ObservableObject, Identifiable, Equatable {
 struct Node: View {
     @EnvironmentObject var appModel: AppModel
     @StateObject var parent: Item
+    @State private var forceUpdate = false
     let onRequestSelected: (APIRequest) -> Void
 
     var body: some View {
@@ -318,6 +319,10 @@ struct Node: View {
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
             .selectionDisabled()
+        }
+        .id(forceUpdate)
+        .onReceive(appModel.objectWillChange) { _ in
+            forceUpdate.toggle()
         }
     }
 }

@@ -30,11 +30,22 @@ enum HTTPMethod: String, CaseIterable {
     }
 }
 
-struct APIRequest: Identifiable, Hashable {
-    let id = UUID()
-    var method: HTTPMethod
-    var url: String
-    var name: String
+class APIRequest: ObservableObject, Identifiable, Equatable {
+    static func == (lhs: APIRequest, rhs: APIRequest) -> Bool {
+        lhs.id == rhs.id
+    }
+
+    @Published var method: HTTPMethod
+    @Published var name: String
+    @Published var url: String
+    let id: UUID
+
+    init(method: HTTPMethod, url: String, name: String) {
+        self.method = method
+        self.url = url
+        self.name = name
+        id = UUID()
+    }
 
     static func new() -> APIRequest {
         APIRequest(method: .GET, url: "", name: "New HTTP Request")
