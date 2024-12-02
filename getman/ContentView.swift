@@ -1,25 +1,11 @@
 import Combine
 import SwiftUI
 
-struct TabItem: Identifiable, Equatable {
-    let id: UUID
-    let request: APIRequest
-    var title: String
-
-    static func new(request: APIRequest, title: String) -> TabItem {
-        TabItem(id: request.id, request: request, title: title)
-    }
-
-    static func == (lhs: TabItem, rhs: TabItem) -> Bool {
-        lhs.id == rhs.id
-    }
-}
-
 struct ContentView: View {
     @EnvironmentObject var appModel: AppModel
 
     @State private var searchText = ""
-    @State private var tabs: [TabItem] = []
+    @State private var tabs: [APIRequest] = []
     @State private var selectedReqId: UUID?
 
     @State private var selectionIds = AppModel.Selection()
@@ -61,7 +47,7 @@ struct ContentView: View {
                 ZStack(alignment: .topLeading) {
                     TabView(selection: $selectedReqId) {
                         ForEach(tabs) { tab in
-                            RequestResponseView(request: tab.request)
+                            RequestResponseView(request: tab)
                                 .tag(tab.id)
                         }
                     }
@@ -74,7 +60,7 @@ struct ContentView: View {
             }
         }
         .onChange(of: selectedReqId) { _, newId in
-            if let selectedReq = tabs.first(where: { $0.request.id == newId }) {
+            if let selectedReq = tabs.first(where: { $0.id == newId }) {
                 appModel.selectedRequestId = selectedReq.id
             }
         }
@@ -88,37 +74,34 @@ struct ContentView: View {
     }
 
     private func openRequest(_ request: APIRequest) {
-        if let existingTab = tabs.first(where: { $0.request.id == request.id }) {
+        if let existingTab = tabs.first(where: { $0.id == request.id }) {
             selectedReqId = existingTab.id
         } else {
-            let newTab = TabItem.new(request: request, title: request.name)
-            tabs.append(newTab)
-            selectedReqId = newTab.id
+            tabs.append(request)
+            selectedReqId = request.id
         }
     }
 
     private func createNewRequest() {
         let newRequest = APIRequest.new()
-        let name = "New Request"
-        let item = Item(name, request: newRequest)
+        let item = Item(newRequest.name, request: newRequest)
         appModel.addChild(item: item)
-        let newTab = TabItem.new(request: newRequest, title: name)
-        tabs.append(newTab)
+        tabs.append(newRequest)
         selectedReqId = newRequest.id
     }
 
-    private func closeTab(_ tab: TabItem) {
+    private func closeTab(_ tab: APIRequest) {
         if let index = tabs.firstIndex(of: tab) {
             tabs.remove(at: index)
-            if selectedReqId == tab.request.id {
-                selectedReqId = tabs.last?.request.id
+            if selectedReqId == tab.id {
+                selectedReqId = tabs.last?.id
             }
         }
     }
 }
 
 struct CustomTabBar: View {
-    @Binding var tabs: [TabItem]
+    @Binding var tabs: [APIRequest]
     @Binding var selectedReqId: UUID?
 
     var body: some View {
@@ -128,8 +111,8 @@ struct CustomTabBar: View {
                     ForEach(tabs, id: \.id) { tab in
                         TabItemView(
                             tab: tab,
-                            isSelected: selectedReqId == tab.request.id,
-                            onSelect: { selectedReqId = tab.request.id },
+                            isSelected: selectedReqId == tab.id,
+                            onSelect: { selectedReqId = tab.id },
                             onClose: { closeTab(tab) }
                         )
                         .id(tab.id)
@@ -148,11 +131,11 @@ struct CustomTabBar: View {
         }
     }
 
-    private func closeTab(_ tab: TabItem) {
+    private func closeTab(_ tab: APIRequest) {
         if let index = tabs.firstIndex(of: tab) {
             tabs.remove(at: index)
-            if selectedReqId == tab.request.id {
-                selectedReqId = tabs.last?.request.id
+            if selectedReqId == tab.id {
+                selectedReqId = tabs.last?.id
             }
         }
     }
@@ -172,7 +155,7 @@ extension View {
 }
 
 struct TabItemView: View {
-    let tab: TabItem
+    let tab: APIRequest
     let isSelected: Bool
     let onSelect: () -> Void
     let onClose: () -> Void
@@ -182,7 +165,7 @@ struct TabItemView: View {
         Button(action: onSelect) {
             HStack {
                 Spacer().frame(width: 14)
-                Text(tab.title)
+                Text(tab.name)
                 Button(action: onClose) {
                     if isHovered {
                         Image(systemName: "xmark")
@@ -300,7 +283,7 @@ struct RequestResponseView: View {
                     data: data,
                     error: error
                 )
-                self.selectedResponseTab = 0  // Switch to Pretty view
+                self.selectedResponseTab = 0
                 self.isLoading = false
                 self.isSending = false
                 self.statusText =
@@ -459,7 +442,7 @@ struct RequestResponseView: View {
                     .padding()
                 } else {
                     TabView(selection: $selectedResponseTab) {
-                        // Pretty JSON View
+                        // JSON View
                         ScrollView {
                             if let data = response?.data,
                                 let json = try? JSONSerialization.jsonObject(with: data),
