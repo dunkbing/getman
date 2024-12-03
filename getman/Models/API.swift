@@ -30,14 +30,14 @@ enum HTTPMethod: String, CaseIterable {
     }
 }
 
-class APIRequest: ObservableObject, Identifiable, Equatable {
+class APIRequest: Identifiable, Equatable {
     static func == (lhs: APIRequest, rhs: APIRequest) -> Bool {
         lhs.id == rhs.id
     }
 
-    @Published var method: HTTPMethod
-    @Published var name: String
-    @Published var url: String
+    var method: HTTPMethod
+    var name: String
+    var url: String
     let id: UUID
 
     init(method: HTTPMethod, url: String, name: String) {

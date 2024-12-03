@@ -11,12 +11,8 @@ import SwiftUI
 class AppModel: ObservableObject {
     typealias Selection = Set<Item.Id>
 
-    init(items: [Item]) {
-        itemsAtTopLevel = items
+    init() {
         bootstrapRoot = Item("__BOOTSTRAP_ROOT_ITEM")
-        items.forEach { item in
-            bootstrapRoot.adopt(child: item)
-        }
         isEmpty = bootstrapRoot.children?.isEmpty ?? true
     }
 
@@ -25,7 +21,6 @@ class AppModel: ObservableObject {
         updateIsEmpty()
     }
 
-    @Published var itemsAtTopLevel: [Item]
     @Published var isDragging: Bool = false
     @Published var bootstrapRoot: Item
     @Published var selectedRequestId: UUID?
@@ -162,7 +157,10 @@ class Item: ObservableObject, Identifiable, Equatable {
     @Published var read: Bool
 
     init(
-        _ name: String, request: APIRequest? = nil, isFolder: Bool = false, children: [Item]? = nil,
+        _ name: String,
+        request: APIRequest? = nil,
+        isFolder: Bool = false,
+        children: [Item]? = nil,
         read: Bool = false
     ) {
         self.name = name
@@ -268,7 +266,6 @@ class Item: ObservableObject, Identifiable, Equatable {
 struct Node: View {
     @EnvironmentObject var appModel: AppModel
     @StateObject var parent: Item
-    @State private var forceUpdate = false
     let onRequestSelected: (APIRequest) -> Void
 
     var body: some View {
@@ -277,16 +274,15 @@ struct Node: View {
                 if childItem.isFolder == false {
                     let req = childItem.request
                     let method = req?.method ?? .GET
-                    Label {
-                        Text(childItem.name)
-                            .padding(.leading, 5)
-                    } icon: {
+                    HStack(spacing: 5) {
                         Text(method.rawValue)
                             .font(.caption)
                             .bold()
                             .foregroundColor(method.color)
-                            .frame(minWidth: 40)
-                            .padding(.leading, 5)
+                            .frame(minWidth: 48)
+                            .padding(.leading, 3.5)
+
+                        Text(childItem.name)
                     }
                     .padding(.vertical, 3)
                     .padding(.leading, 4)
@@ -319,10 +315,6 @@ struct Node: View {
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
             .selectionDisabled()
-        }
-        .id(forceUpdate)
-        .onReceive(appModel.objectWillChange) { _ in
-            forceUpdate.toggle()
         }
     }
 }

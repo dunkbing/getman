@@ -9,7 +9,7 @@ import SwiftUI
 
 @main
 struct getmanApp: App {
-    @StateObject private var model = AppModel(items: [])
+    @StateObject private var model = AppModel()
 
     var body: some Scene {
         WindowGroup {
