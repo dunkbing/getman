@@ -10,6 +10,7 @@ struct ContentView: View {
 
     @State private var selectionIds = AppModel.Selection()
     @State private var draggingIds = AppModel.Selection()
+    @State private var isSelectionFromTree = false
 
     private var detailItemsSelected: [Item] {
         appModel.itemsFind(ids: selectionIds)
@@ -52,10 +53,14 @@ struct ContentView: View {
                         }
                     }
 
-                    CustomTabBar(tabs: $tabs, selectedReqId: $selectedReqId)
-                        .frame(height: 30)
-                        .background(Color(NSColor.windowBackgroundColor))
-                        .border(Color.gray.opacity(0.3), width: 0.5, edges: [.bottom])
+                    CustomTabBar(
+                        tabs: $tabs,
+                        selectedReqId: $selectedReqId,
+                        isSelectionFromTree: $isSelectionFromTree
+                    )
+                    .frame(height: 30)
+                    .background(Color(NSColor.windowBackgroundColor))
+                    .border(Color.gray.opacity(0.3), width: 0.5, edges: [.bottom])
                 }
             }
         }
@@ -80,6 +85,7 @@ struct ContentView: View {
             tabs.append(request)
             selectedReqId = request.id
         }
+        isSelectionFromTree = true
     }
 
     private func createNewRequest() {
@@ -88,6 +94,7 @@ struct ContentView: View {
         appModel.addChild(item: item)
         tabs.append(newRequest)
         selectedReqId = newRequest.id
+        isSelectionFromTree = true
     }
 
     private func closeTab(_ tab: APIRequest) {

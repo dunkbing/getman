@@ -10,6 +10,7 @@ import SwiftUI
 struct CustomTabBar: View {
     @Binding var tabs: [APIRequest]
     @Binding var selectedReqId: UUID?
+    @Binding var isSelectionFromTree: Bool
 
     var body: some View {
         ScrollViewReader { proxy in
@@ -29,9 +30,13 @@ struct CustomTabBar: View {
             }
             .padding(.horizontal, 8)
             .onChange(of: selectedReqId) { oldValue, newValue in
-                if let id = newValue {
+                if let id = newValue, isSelectionFromTree {
                     withAnimation {
                         proxy.scrollTo(id, anchor: .center)
+                    }
+                    // Reset the flag after scrolling
+                    DispatchQueue.main.async {
+                        isSelectionFromTree = false
                     }
                 }
             }

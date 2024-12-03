@@ -31,6 +31,8 @@ struct LazyView<Content: View>: View {
 }
 
 struct RequestResponseView: View {
+    @EnvironmentObject var appModel: AppModel
+
     @Binding var request: APIRequest
 
     @State private var currentURL = ""
@@ -47,8 +49,6 @@ struct RequestResponseView: View {
     @State private var keyValuePairs: [KeyValuePair] = [
         KeyValuePair(key: "", value: "")
     ]
-
-    @EnvironmentObject var appModel: AppModel
 
     init(request: Binding<APIRequest>) {
         self._request = request
