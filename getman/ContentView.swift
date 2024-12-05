@@ -21,22 +21,12 @@ struct ContentView: View {
             ZStack {
                 VisualEffectView(material: .sidebar, blendingMode: .behindWindow)
 
-                Group {
-                    if appModel.isEmpty {
-                        EmptyStateView()
-                    } else {
-                        VStack {
-                            List(selection: $selectionIds) {
-                                Node(parent: appModel.bootstrapRoot) { req in
-                                    selectedReqId = req.id
-                                    openRequest(req)
-                                }
-                            }
-                            .listStyle(.sidebar)
-                            SearchBar(searchText: $searchText)
-                        }
-                    }
-                }
+                SideBarView(
+                    selectionIds: $selectionIds,
+                    searchText: $searchText,
+                    selectedReqId: $selectedReqId,
+                    onRequestSelected: openRequest
+                )
             }
             .frame(minWidth: 200, maxWidth: 300)
         } detail: {
@@ -90,10 +80,10 @@ struct ContentView: View {
 
     private func createNewRequest() {
         let newRequest = APIRequest.new()
-        let item = Item(newRequest.name, request: newRequest)
-        appModel.addChild(item: item)
         tabs.append(newRequest)
         selectedReqId = newRequest.id
+        let item = Item(newRequest.name, request: newRequest)
+        appModel.addChild(item: item)
         isSelectionFromTree = true
     }
 
@@ -103,43 +93,6 @@ struct ContentView: View {
             if selectedReqId == tab.id {
                 selectedReqId = tabs.last?.id
             }
-        }
-    }
-}
-
-struct EmptyStateView: View {
-    var body: some View {
-        VStack(spacing: 4) {
-            Text("No Requests")
-                .font(.title2)
-                .padding(.bottom, 2)
-            Text("New Request (⌘ N)")
-                .font(.subheadline)
-            Text("New Folder (⌘ ⇧ N)")
-                .font(.subheadline)
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .padding()
-    }
-}
-
-struct SearchBar: View {
-    @Binding var searchText: String
-
-    var body: some View {
-        HStack {
-            ZStack(alignment: .leading) {
-                Image(systemName: "magnifyingglass")
-                    .foregroundColor(.gray)
-                    .padding(.leading, 8)
-                TextField("Search requests", text: $searchText)
-                    .textFieldStyle(PlainTextFieldStyle())
-                    .padding(.leading, 28)
-            }
-            .frame(height: 28)
-            .background(Color(nsColor: .controlBackgroundColor))
-            .cornerRadius(6)
-            .padding(8)
         }
     }
 }

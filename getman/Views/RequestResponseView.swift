@@ -258,6 +258,7 @@ struct RequestResponseView: View {
                                     .frame(width: 10, height: 10)
                                 Spacer()
                                     .frame(width: 5)
+                                Text("Sending")
                             }
                             .transition(.opacity)
                         }
