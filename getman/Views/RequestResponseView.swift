@@ -50,6 +50,8 @@ struct RequestResponseView: View {
         KeyValuePair(key: "", value: "")
     ]
 
+    @FocusState private var focused: Bool
+
     init(request: Binding<APIRequest>) {
         self._request = request
         self._selectedMethod = State(initialValue: request.wrappedValue.method)
@@ -143,13 +145,20 @@ struct RequestResponseView: View {
                         appModel.objectWillChange.send()
                     }
 
-                    TextField(
-                        "Enter URL", text: $currentURL,
-                        onCommit: {
+                    TextField("Enter URL", text: $currentURL)
+                        .focused($focused)
+                        .textFieldStyle(RoundedBorderTextFieldStyle())
+                        .onChange(of: currentURL) { _, newValue in
+                            if !focused {
+                                return
+                            }
+                            if selectedBodyType == .urlEncoded {
+                                updateParametersFromURL()
+                            }
+                        }
+                        .onSubmit {
                             Task { await sendRequest() }
                         }
-                    )
-                    .textFieldStyle(RoundedBorderTextFieldStyle())
 
                     Button(action: {
                         if isSending {
@@ -199,13 +208,23 @@ struct RequestResponseView: View {
                             }
                         }
                         .fixedSize()
+                        .onChange(of: selectedBodyType) { _, newValue in
+                            if newValue == .urlEncoded {
+                                updateParametersFromURL()
+                            }
+                        }
 
                         ZStack {
                             // Main content
                             if selectedBodyType == .urlEncoded || selectedBodyType == .multiPart {
                                 KeyValueEditor(
                                     pairs: $keyValuePairs,
-                                    isMultiPart: selectedBodyType == .multiPart
+                                    isMultiPart: selectedBodyType == .multiPart,
+                                    onPairsChanged: {
+                                        if selectedBodyType == .urlEncoded {
+                                            updateURLWithParameters()
+                                        }
+                                    }
                                 )
                             } else if selectedBodyType == .noBody {
                                 VStack {
@@ -354,6 +373,42 @@ struct RequestResponseView: View {
             }
             .frame(minWidth: 300)
             .padding()
+        }
+    }
+}
+
+extension RequestResponseView {
+    private func updateURLWithParameters() {
+        var urlComponents = URLComponents(string: currentURL) ?? URLComponents()
+        let enabledPairs = keyValuePairs.filter { $0.isEnabled && !$0.key.isEmpty }
+
+        if enabledPairs.isEmpty {
+            urlComponents.queryItems = nil
+        } else {
+            urlComponents.queryItems = enabledPairs.map {
+                URLQueryItem(name: $0.key, value: $0.value)
+            }
+        }
+
+        if let newURLString = urlComponents.string {
+            currentURL = newURLString
+        }
+    }
+
+    private func updateParametersFromURL() {
+        guard let urlComponents = URLComponents(string: currentURL),
+            let queryItems = urlComponents.queryItems
+        else {
+            keyValuePairs = [KeyValuePair(key: "", value: "")]
+            return
+        }
+
+        keyValuePairs = queryItems.map {
+            KeyValuePair(key: $0.name, value: $0.value ?? "")
+        }
+
+        if keyValuePairs.isEmpty {
+            keyValuePairs.append(KeyValuePair(key: "", value: ""))
         }
     }
 }

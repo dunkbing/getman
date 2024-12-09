@@ -22,7 +22,14 @@ struct FocusField: Hashable {
 struct KeyValueEditor: View {
     @Binding var pairs: [KeyValuePair]
     let isMultiPart: Bool
+    let onPairsChanged: (() -> Void)?
     @FocusState private var focusedField: FocusField?
+
+    init(pairs: Binding<[KeyValuePair]>, isMultiPart: Bool, onPairsChanged: (() -> Void)? = nil) {
+        self._pairs = pairs
+        self.isMultiPart = isMultiPart
+        self.onPairsChanged = onPairsChanged
+    }
 
     private func nextField(after current: FocusField, isTab: Bool = false) {
         guard let currentIndex = pairs.firstIndex(where: { $0.id == current.pairId }) else {
@@ -98,6 +105,9 @@ struct KeyValueEditor: View {
                                 handleMoveCommand(
                                     direction, for: FocusField(pairId: pair.id, isKey: true))
                             }
+                            .onChange(of: pair.key) { _, _ in
+                                onPairsChanged?()
+                            }
                             .frame(minWidth: 0, maxWidth: .infinity)
                             .padding(.horizontal, 8)
 
@@ -112,6 +122,9 @@ struct KeyValueEditor: View {
                             .onMoveCommand { direction in
                                 handleMoveCommand(
                                     direction, for: FocusField(pairId: pair.id, isKey: false))
+                            }
+                            .onChange(of: pair.value) { _, _ in
+                                onPairsChanged?()
                             }
                             .frame(minWidth: 0, maxWidth: .infinity)
                             .padding(.horizontal, 8)
