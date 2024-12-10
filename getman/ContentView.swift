@@ -7,10 +7,10 @@ struct ContentView: View {
     @State private var searchText = ""
     @State private var tabs: [APIRequest] = []
     @State private var selectedReqId: UUID?
-
     @State private var selectionIds = AppModel.Selection()
     @State private var draggingIds = AppModel.Selection()
     @State private var isSelectionFromTree = false
+    @AppStorage("isHorizontalLayout") private var isHorizontalLayout = true
 
     private var detailItemsSelected: [Item] {
         appModel.itemsFind(ids: selectionIds)
@@ -38,8 +38,11 @@ struct ContentView: View {
                 ZStack(alignment: .topLeading) {
                     TabView(selection: $selectedReqId) {
                         ForEach($tabs) { $tab in
-                            RequestResponseView(request: $tab)
-                                .tag(tab.id)
+                            RequestResponseView(
+                                request: $tab,
+                                isHorizontalLayout: isHorizontalLayout
+                            )
+                            .tag(tab.id)
                         }
                     }
 
@@ -63,6 +66,23 @@ struct ContentView: View {
             ToolbarItemGroup(placement: .navigation) {
                 Button(action: createNewRequest) {
                     Image(systemName: "plus")
+                }
+            }
+
+            ToolbarItemGroup(placement: .automatic) {
+                Button(action: { isHorizontalLayout.toggle() }) {
+                    Image(systemName: "rectangle.dock")
+                        .resizable()
+                        .frame(
+                            width: isHorizontalLayout ? 16 : 20,
+                            height: isHorizontalLayout ? 20 : 16
+                        )
+                        .rotationEffect(.degrees(isHorizontalLayout ? -90 : 0))
+                        .help(
+                            isHorizontalLayout
+                                ? "Switch to vertical layout"
+                                : "Switch to horizontal layout"
+                        )
                 }
             }
         }
