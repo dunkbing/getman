@@ -31,6 +31,17 @@ struct LazyView<Content: View>: View {
     }
 }
 
+enum BodyType: String, CaseIterable {
+    case urlEncoded = "Url Encoded"
+    case multiPart = "Multi-Part"
+    case json = "JSON"
+    case graphQL = "GraphQL"
+    case xml = "XML"
+    case other = "Other"
+    case binaryFile = "Binary File"
+    case noBody = "No Body"
+}
+
 struct RequestResponseView: View {
     @EnvironmentObject var appModel: AppModel
 
@@ -45,7 +56,7 @@ struct RequestResponseView: View {
     @State private var isLoading = false
     @State private var isSending = false
     @State private var task: URLSessionTask?
-    @State private var selectedBodyType = BodyType.urlEncoded
+    @State private var selectedBodyType = BodyType.noBody
     @State private var bodyContent = ""
     @State private var keyValuePairs: [KeyValuePair] = [
         KeyValuePair(key: "", value: "")
@@ -60,17 +71,6 @@ struct RequestResponseView: View {
         self._selectedMethod = State(initialValue: request.wrappedValue.method)
         self._currentURL = State(initialValue: request.wrappedValue.url)
         self.isHorizontalLayout = isHorizontalLayout
-    }
-
-    enum BodyType: String, CaseIterable {
-        case urlEncoded = "Url Encoded"
-        case multiPart = "Multi-Part"
-        case json = "JSON"
-        case graphQL = "GraphQL"
-        case xml = "XML"
-        case other = "Other"
-        case binaryFile = "Binary File"
-        case noBody = "No Body"
     }
 
     func sendRequest() async {
@@ -192,6 +192,40 @@ struct RequestResponseView: View {
 
             TabView(selection: $selectedInputTab) {
                 VStack {
+                    Text("Query Params")
+                        .font(.system(.headline, design: .monospaced))
+                        .fontWeight(.semibold)
+                        .frame(height: 25)
+                    KeyValueEditor(
+                        pairs: $keyValuePairs,
+                        isMultiPart: false,
+                        onPairsChanged: {
+                            updateURLWithParameters()
+                        }
+                    )
+                }
+                .padding(.top, 8)
+                .tabItem { Text("Params") }
+                .tag(0)
+
+                VStack {
+                    Text("Headers")
+                        .font(.system(.headline, design: .monospaced))
+                        .fontWeight(.semibold)
+                        .frame(height: 25)
+                    KeyValueEditor(
+                        pairs: $keyValuePairs,
+                        isMultiPart: false,
+                        onPairsChanged: {
+                            updateURLWithParameters()
+                        }
+                    )
+                }
+                .padding(.top, 8)
+                .tabItem { Text("Headers") }
+                .tag(1)
+
+                VStack {
                     Picker("Body Type", selection: $selectedBodyType) {
                         Section(header: Text("Form Data")) {
                             Text(BodyType.urlEncoded.rawValue)
@@ -218,6 +252,7 @@ struct RequestResponseView: View {
                             updateParametersFromURL()
                         }
                     }
+                    .frame(height: 25)
 
                     ZStack {
                         // Main content
@@ -237,7 +272,7 @@ struct RequestResponseView: View {
                                     .resizable()
                                     .frame(width: 50, height: 50)
                                     .foregroundColor(.gray)
-                                Text("No Body")
+                                Text("Empty Body")
                                     .font(.title)
                                     .foregroundColor(.gray)
                             }
@@ -245,7 +280,7 @@ struct RequestResponseView: View {
                         } else if selectedBodyType == .json || selectedBodyType == .graphQL
                             || selectedBodyType == .xml || selectedBodyType == .other
                         {
-                            Color.clear  // Placeholder
+                            Color.clear
                         } else {
                             Text("Content for \(selectedBodyType.rawValue)")
                                 .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -257,11 +292,9 @@ struct RequestResponseView: View {
                             .allowsHitTesting(isTextContentType)
                     }
                 }
+                .padding(.top, 8)
                 .tabItem { Text("Body") }
-                .tag(0)
-
-                Text("Params").tabItem { Text("Params") }.tag(1)
-                Text("Headers").tabItem { Text("Headers") }.tag(2)
+                .tag(2)
             }
         }
         .padding()
