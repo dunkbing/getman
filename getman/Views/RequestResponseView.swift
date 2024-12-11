@@ -13,6 +13,7 @@ struct MonacoEditorView: View {
 
     var body: some View {
         SwiftyMonaco(text: $text)
+            .minimap(false)
             .syntaxHighlight(.systemVerilog)
             .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
@@ -78,11 +79,13 @@ struct RequestResponseView: View {
         var urlRequest = URLRequest(url: url)
         urlRequest.httpMethod = selectedMethod.rawValue
 
-        if selectedBodyType == .json || selectedBodyType == .graphQL || selectedBodyType == .xml
-            || selectedBodyType == .other
-        {
-            urlRequest.httpBody = bodyContent.data(using: .utf8)
-            urlRequest.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        if selectedMethod != .GET && selectedMethod != .HEAD {
+            if selectedBodyType == .json || selectedBodyType == .graphQL || selectedBodyType == .xml
+                || selectedBodyType == .other
+            {
+                urlRequest.httpBody = bodyContent.data(using: .utf8)
+                urlRequest.setValue("application/json", forHTTPHeaderField: "Content-Type")
+            }
         }
 
         let startTime = Date()

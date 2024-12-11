@@ -72,23 +72,36 @@ struct KeyValueEditor: View {
     var body: some View {
         VStack(spacing: 0) {
             HStack(spacing: 0) {
+                Spacer().frame(width: 40)
+
+                Divider().frame(height: 28)
+
                 Text("Key")
-                    .font(.system(.body, design: .monospaced))
+                    .font(.system(.callout, design: .monospaced))
                     .fontWeight(.medium)
-                    .frame(minWidth: 0, maxWidth: .infinity)
+                    .frame(minWidth: 0, maxWidth: .infinity, alignment: .leading)
                     .padding(.horizontal, 8)
-                    .background(Color.primary.opacity(0.1))
+
+                Divider().frame(height: 28)
 
                 Text("Value")
-                    .font(.system(.body, design: .monospaced))
+                    .font(.system(.callout, design: .monospaced))
                     .fontWeight(.medium)
-                    .frame(minWidth: 0, maxWidth: .infinity)
+                    .frame(minWidth: 0, maxWidth: .infinity, alignment: .leading)
                     .padding(.horizontal, 8)
-                    .background(Color.primary.opacity(0.1))
+
+                Spacer().frame(width: 40)
             }
             .frame(height: 36)
+            .overlay(
+                VStack {
+                    Divider()
+                    Spacer()
+                    Divider()
+                }
+            )
 
-            List {
+            ScrollView {
                 ForEach($pairs) { $pair in
                     HStack(spacing: 0) {
                         Toggle("", isOn: $pair.isEnabled)
@@ -103,7 +116,9 @@ struct KeyValueEditor: View {
                             .onSubmit { nextField(after: FocusField(pairId: pair.id, isKey: true)) }
                             .onMoveCommand { direction in
                                 handleMoveCommand(
-                                    direction, for: FocusField(pairId: pair.id, isKey: true))
+                                    direction,
+                                    for: FocusField(pairId: pair.id, isKey: true)
+                                )
                             }
                             .onChange(of: pair.key) { _, _ in
                                 onPairsChanged?()
@@ -121,7 +136,9 @@ struct KeyValueEditor: View {
                             }
                             .onMoveCommand { direction in
                                 handleMoveCommand(
-                                    direction, for: FocusField(pairId: pair.id, isKey: false))
+                                    direction,
+                                    for: FocusField(pairId: pair.id, isKey: false)
+                                )
                             }
                             .onChange(of: pair.value) { _, _ in
                                 onPairsChanged?()
@@ -143,7 +160,6 @@ struct KeyValueEditor: View {
                     .frame(height: 36)
                 }
             }
-            .listStyle(PlainListStyle())
 
             Button(action: {
                 let newPair = KeyValuePair(key: "", value: "")
@@ -157,5 +173,6 @@ struct KeyValueEditor: View {
             }
             .padding(.vertical, 8)
         }
+        .background(.background)
     }
 }
