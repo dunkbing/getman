@@ -111,7 +111,8 @@ struct KeyValueEditor: View {
                         TextField("Key", text: $pair.key)
                             .textFieldStyle(PlainTextFieldStyle())
                             .focused(
-                                $focusedField, equals: FocusField(pairId: pair.id, isKey: true)
+                                $focusedField,
+                                equals: FocusField(pairId: pair.id, isKey: true)
                             )
                             .onSubmit { nextField(after: FocusField(pairId: pair.id, isKey: true)) }
                             .onMoveCommand { direction in
@@ -149,6 +150,7 @@ struct KeyValueEditor: View {
                         Button(action: {
                             if let index = pairs.firstIndex(where: { $0.id == pair.id }) {
                                 pairs.remove(at: index)
+                                onPairsChanged?()
                             }
                         }) {
                             Image(systemName: "minus.circle.fill")

@@ -58,7 +58,13 @@ struct RequestResponseView: View {
     @State private var task: URLSessionTask?
     @State private var selectedBodyType = BodyType.noBody
     @State private var bodyContent = ""
-    @State private var keyValuePairs: [KeyValuePair] = [
+    @State private var paramsKvPairs: [KeyValuePair] = [
+        KeyValuePair(key: "", value: "")
+    ]
+    @State private var headersKvPairs: [KeyValuePair] = [
+        KeyValuePair(key: "", value: "")
+    ]
+    @State private var formKvPairs: [KeyValuePair] = [
         KeyValuePair(key: "", value: "")
     ]
 
@@ -197,7 +203,7 @@ struct RequestResponseView: View {
                         .fontWeight(.semibold)
                         .frame(height: 25)
                     KeyValueEditor(
-                        pairs: $keyValuePairs,
+                        pairs: $paramsKvPairs,
                         isMultiPart: false,
                         onPairsChanged: {
                             updateURLWithParameters()
@@ -214,11 +220,9 @@ struct RequestResponseView: View {
                         .fontWeight(.semibold)
                         .frame(height: 25)
                     KeyValueEditor(
-                        pairs: $keyValuePairs,
+                        pairs: $headersKvPairs,
                         isMultiPart: false,
-                        onPairsChanged: {
-                            updateURLWithParameters()
-                        }
+                        onPairsChanged: {}
                     )
                 }
                 .padding(.top, 8)
@@ -258,13 +262,9 @@ struct RequestResponseView: View {
                         // Main content
                         if selectedBodyType == .urlEncoded || selectedBodyType == .multiPart {
                             KeyValueEditor(
-                                pairs: $keyValuePairs,
+                                pairs: $formKvPairs,
                                 isMultiPart: selectedBodyType == .multiPart,
-                                onPairsChanged: {
-                                    if selectedBodyType == .urlEncoded {
-                                        updateURLWithParameters()
-                                    }
-                                }
+                                onPairsChanged: {}
                             )
                         } else if selectedBodyType == .noBody {
                             VStack {
@@ -434,7 +434,7 @@ struct RequestResponseView: View {
 extension RequestResponseView {
     private func updateURLWithParameters() {
         var urlComponents = URLComponents(string: currentURL) ?? URLComponents()
-        let enabledPairs = keyValuePairs.filter { $0.isEnabled && !$0.key.isEmpty }
+        let enabledPairs = paramsKvPairs.filter { $0.isEnabled && !$0.key.isEmpty }
 
         if enabledPairs.isEmpty {
             urlComponents.queryItems = nil
@@ -453,16 +453,16 @@ extension RequestResponseView {
         guard let urlComponents = URLComponents(string: currentURL),
             let queryItems = urlComponents.queryItems
         else {
-            keyValuePairs = [KeyValuePair(key: "", value: "")]
+            paramsKvPairs = [KeyValuePair(key: "", value: "")]
             return
         }
 
-        keyValuePairs = queryItems.map {
+        paramsKvPairs = queryItems.map {
             KeyValuePair(key: $0.name, value: $0.value ?? "")
         }
 
-        if keyValuePairs.isEmpty {
-            keyValuePairs.append(KeyValuePair(key: "", value: ""))
+        if paramsKvPairs.isEmpty {
+            paramsKvPairs.append(KeyValuePair(key: "", value: ""))
         }
     }
 }
