@@ -44,6 +44,7 @@ enum BodyType: String, CaseIterable {
 
 struct RequestResponseView: View {
     @EnvironmentObject var appModel: AppModel
+    @Environment(\.colorScheme) var colorScheme
 
     @Binding var request: APIRequest
 
@@ -144,17 +145,27 @@ struct RequestResponseView: View {
     func requestPanel() -> some View {
         VStack(spacing: 16) {
             HStack {
-                Picker("", selection: $selectedMethod) {
-                    ForEach(HTTPMethod.allCases, id: \.self) { method in
-                        Text(method.rawValue).tag(method)
+                ZStack {
+                    Picker("", selection: $selectedMethod) {
+                        ForEach(HTTPMethod.allCases, id: \.self) { method in
+                            Text(method.rawValue)
+                                .font(.system(.headline, design: .monospaced))
+                                .fontWeight(.bold)
+                                .foregroundStyle(method.color)
+                                .tag(method)
+                        }
+                    }
+                    .labelsHidden()
+                    .fixedSize()
+                    .onChange(of: selectedMethod) { _, newValue in
+                        request.method = newValue
+                        appModel.objectWillChange.send()
                     }
                 }
-                .labelsHidden()
-                .fixedSize()
-                .onChange(of: selectedMethod) { _, newValue in
-                    request.method = newValue
-                    appModel.objectWillChange.send()
-                }
+                .background(
+                    colorScheme == .dark ? Color(white: 0.15) : Color(white: 0.95)
+                )
+                .cornerRadius(5)
 
                 TextField("Enter URL", text: $currentURL)
                     .focused($focused)

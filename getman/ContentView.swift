@@ -10,7 +10,9 @@ struct ContentView: View {
     @State private var selectionIds = AppModel.Selection()
     @State private var draggingIds = AppModel.Selection()
     @State private var isSelectionFromTree = false
+
     @AppStorage("isHorizontalLayout") private var isHorizontalLayout = true
+    @AppStorage("isDarkMode") private var isDarkMode = false
 
     private var detailItemsSelected: [Item] {
         appModel.itemsFind(ids: selectionIds)
@@ -70,6 +72,11 @@ struct ContentView: View {
             }
 
             ToolbarItemGroup(placement: .automatic) {
+                Button(action: toggleTheme) {
+                    Image(systemName: isDarkMode ? "sun.max" : "moon")
+                        .help(isDarkMode ? "Switch to light mode" : "Switch to dark mode")
+                }
+
                 Button(action: { isHorizontalLayout.toggle() }) {
                     Image(systemName: "rectangle.dock")
                         .resizable()
@@ -85,6 +92,14 @@ struct ContentView: View {
                         )
                 }
             }
+        }
+        .preferredColorScheme(isDarkMode ? .dark : .light)
+    }
+
+    private func toggleTheme() {
+        isDarkMode.toggle()
+        if let window = NSApplication.shared.windows.first {
+            window.appearance = NSAppearance(named: isDarkMode ? .darkAqua : .aqua)
         }
     }
 

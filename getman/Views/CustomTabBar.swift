@@ -65,6 +65,7 @@ struct TabItemView: View {
             HStack {
                 Spacer().frame(width: 14)
                 Text(tab.name)
+                    .fontWeight(.semibold)
                 Button(action: onClose) {
                     if isHovered {
                         Image(systemName: "xmark")

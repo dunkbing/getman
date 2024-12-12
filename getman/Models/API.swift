@@ -21,10 +21,12 @@ enum HTTPMethod: String, CaseIterable {
     var color: Color {
         switch self {
         case .GET: return .green
-        case .POST: return .orange
+        case .POST: return .orange.opacity(0.9)
         case .PUT: return .blue
-        case .DELETE: return .red
+        case .DELETE: return .red.opacity(0.9)
         case .PATCH: return .purple
+        case .HEAD: return .green
+        case .OPTIONS: return .pink
         default: return .gray
         }
     }
