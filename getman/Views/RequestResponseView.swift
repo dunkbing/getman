@@ -63,7 +63,10 @@ struct RequestResponseView: View {
         KeyValuePair(key: "", value: "")
     ]
     @State private var headersKvPairs: [KeyValuePair] = [
-        KeyValuePair(key: "", value: "")
+        KeyValuePair(key: "Accept", value: "application/json", isHidden: true),
+        KeyValuePair(key: "Content-Type", value: "application/json", isHidden: true),
+        KeyValuePair(key: "User-Agent", value: "Getman/1.0", isHidden: true),
+        KeyValuePair(key: "", value: ""),
     ]
     @State private var formKvPairs: [KeyValuePair] = [
         KeyValuePair(key: "", value: "")
@@ -86,12 +89,22 @@ struct RequestResponseView: View {
         var urlRequest = URLRequest(url: url)
         urlRequest.httpMethod = selectedMethod.rawValue
 
+        // Add headers from headersKvPairs
+        for header in headersKvPairs where header.isEnabled && !header.key.isEmpty {
+            urlRequest.setValue(header.value, forHTTPHeaderField: header.key)
+        }
+
         if selectedMethod != .GET && selectedMethod != .HEAD {
             if selectedBodyType == .json || selectedBodyType == .graphQL || selectedBodyType == .xml
                 || selectedBodyType == .other
             {
                 urlRequest.httpBody = bodyContent.data(using: .utf8)
-                urlRequest.setValue("application/json", forHTTPHeaderField: "Content-Type")
+                // Only set Content-Type if it's not already set in headers
+                if !headersKvPairs.contains(where: {
+                    $0.isEnabled && $0.key.lowercased() == "content-type"
+                }) {
+                    urlRequest.setValue("application/json", forHTTPHeaderField: "Content-Type")
+                }
             }
         }
 

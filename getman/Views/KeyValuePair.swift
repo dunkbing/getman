@@ -12,6 +12,7 @@ struct KeyValuePair: Identifiable {
     var key: String
     var value: String
     var isEnabled: Bool = true
+    var isHidden: Bool = false
 }
 
 struct FocusField: Hashable {
@@ -23,7 +24,9 @@ struct KeyValueEditor: View {
     @Binding var pairs: [KeyValuePair]
     let isMultiPart: Bool
     let onPairsChanged: (() -> Void)?
+
     @FocusState private var focusedField: FocusField?
+    @State private var showHiddenPairs = false
 
     init(pairs: Binding<[KeyValuePair]>, isMultiPart: Bool, onPairsChanged: (() -> Void)? = nil) {
         self._pairs = pairs
@@ -71,6 +74,13 @@ struct KeyValueEditor: View {
 
     var body: some View {
         VStack(spacing: 0) {
+            HStack {
+                Toggle("Show Hidden", isOn: $showHiddenPairs)
+                    .toggleStyle(.switch)
+                Spacer()
+            }
+            .padding(.horizontal)
+
             HStack(spacing: 0) {
                 Spacer().frame(width: 40)
 
@@ -103,63 +113,67 @@ struct KeyValueEditor: View {
 
             ScrollView {
                 ForEach($pairs) { $pair in
-                    HStack(spacing: 0) {
-                        Toggle("", isOn: $pair.isEnabled)
-                            .labelsHidden()
+                    if !pair.isHidden || showHiddenPairs {
+                        HStack(spacing: 0) {
+                            Toggle("", isOn: $pair.isEnabled)
+                                .labelsHidden()
+                                .frame(width: 40)
+
+                            TextField("Key", text: $pair.key)
+                                .textFieldStyle(PlainTextFieldStyle())
+                                .focused(
+                                    $focusedField,
+                                    equals: FocusField(pairId: pair.id, isKey: true)
+                                )
+                                .onSubmit {
+                                    nextField(after: FocusField(pairId: pair.id, isKey: true))
+                                }
+                                .onMoveCommand { direction in
+                                    handleMoveCommand(
+                                        direction,
+                                        for: FocusField(pairId: pair.id, isKey: true)
+                                    )
+                                }
+                                .onChange(of: pair.key) { _, _ in
+                                    onPairsChanged?()
+                                }
+                                .frame(minWidth: 0, maxWidth: .infinity)
+                                .padding(.horizontal, 8)
+
+                            TextField("Value", text: $pair.value)
+                                .textFieldStyle(PlainTextFieldStyle())
+                                .focused(
+                                    $focusedField, equals: FocusField(pairId: pair.id, isKey: false)
+                                )
+                                .onSubmit {
+                                    nextField(after: FocusField(pairId: pair.id, isKey: false))
+                                }
+                                .onMoveCommand { direction in
+                                    handleMoveCommand(
+                                        direction,
+                                        for: FocusField(pairId: pair.id, isKey: false)
+                                    )
+                                }
+                                .onChange(of: pair.value) { _, _ in
+                                    onPairsChanged?()
+                                }
+                                .frame(minWidth: 0, maxWidth: .infinity)
+                                .padding(.horizontal, 8)
+
+                            Button(action: {
+                                if let index = pairs.firstIndex(where: { $0.id == pair.id }) {
+                                    pairs.remove(at: index)
+                                    onPairsChanged?()
+                                }
+                            }) {
+                                Image(systemName: "minus.circle.fill")
+                                    .foregroundColor(.red)
+                            }
+                            .buttonStyle(PlainButtonStyle())
                             .frame(width: 40)
-
-                        TextField("Key", text: $pair.key)
-                            .textFieldStyle(PlainTextFieldStyle())
-                            .focused(
-                                $focusedField,
-                                equals: FocusField(pairId: pair.id, isKey: true)
-                            )
-                            .onSubmit { nextField(after: FocusField(pairId: pair.id, isKey: true)) }
-                            .onMoveCommand { direction in
-                                handleMoveCommand(
-                                    direction,
-                                    for: FocusField(pairId: pair.id, isKey: true)
-                                )
-                            }
-                            .onChange(of: pair.key) { _, _ in
-                                onPairsChanged?()
-                            }
-                            .frame(minWidth: 0, maxWidth: .infinity)
-                            .padding(.horizontal, 8)
-
-                        TextField("Value", text: $pair.value)
-                            .textFieldStyle(PlainTextFieldStyle())
-                            .focused(
-                                $focusedField, equals: FocusField(pairId: pair.id, isKey: false)
-                            )
-                            .onSubmit {
-                                nextField(after: FocusField(pairId: pair.id, isKey: false))
-                            }
-                            .onMoveCommand { direction in
-                                handleMoveCommand(
-                                    direction,
-                                    for: FocusField(pairId: pair.id, isKey: false)
-                                )
-                            }
-                            .onChange(of: pair.value) { _, _ in
-                                onPairsChanged?()
-                            }
-                            .frame(minWidth: 0, maxWidth: .infinity)
-                            .padding(.horizontal, 8)
-
-                        Button(action: {
-                            if let index = pairs.firstIndex(where: { $0.id == pair.id }) {
-                                pairs.remove(at: index)
-                                onPairsChanged?()
-                            }
-                        }) {
-                            Image(systemName: "minus.circle.fill")
-                                .foregroundColor(.red)
                         }
-                        .buttonStyle(PlainButtonStyle())
-                        .frame(width: 40)
+                        .frame(height: 36)
                     }
-                    .frame(height: 36)
                 }
             }
 
