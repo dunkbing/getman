@@ -21,16 +21,26 @@ struct FocusField: Hashable {
 }
 
 struct KeyValueEditor: View {
+    let name: String
     @Binding var pairs: [KeyValuePair]
     let isMultiPart: Bool
     let onPairsChanged: (() -> Void)?
+    let isHeadersEditor: Bool
 
     @FocusState private var focusedField: FocusField?
     @State private var showHiddenPairs = false
 
-    init(pairs: Binding<[KeyValuePair]>, isMultiPart: Bool, onPairsChanged: (() -> Void)? = nil) {
+    init(
+        name: String,
+        pairs: Binding<[KeyValuePair]>,
+        isMultiPart: Bool,
+        isHeadersEditor: Bool = false,
+        onPairsChanged: (() -> Void)? = nil
+    ) {
+        self.name = name
         self._pairs = pairs
         self.isMultiPart = isMultiPart
+        self.isHeadersEditor = isHeadersEditor
         self.onPairsChanged = onPairsChanged
     }
 
@@ -75,11 +85,38 @@ struct KeyValueEditor: View {
     var body: some View {
         VStack(spacing: 0) {
             HStack {
-                Toggle("Show Hidden", isOn: $showHiddenPairs)
-                    .toggleStyle(.switch)
-                Spacer()
+                if !name.isEmpty {
+                    Text(name)
+                        .font(.system(.headline, design: .monospaced))
+                        .fontWeight(.semibold)
+                        .frame(height: 25)
+                }
+
+                if isHeadersEditor {
+                    HStack {
+                        Button(action: {
+                            showHiddenPairs.toggle()
+                        }) {
+                            HStack(spacing: 4) {
+                                Image(systemName: showHiddenPairs ? "eye.slash.fill" : "eye.fill")
+                                Text(
+                                    showHiddenPairs ? "Hide auto-generated headers" : "Show hidden"
+                                )
+                                .font(.callout)
+                            }
+                            .foregroundColor(.secondary)
+                        }
+                        .help(
+                            showHiddenPairs
+                                ? "Click to hide these headers. They will still be automatically added and sent with the request."
+                                : "These headers are automatically included and sent with the request. Click to view and modify them."
+                        )
+                        .buttonStyle(HoverButtonStyle())
+                    }
+                    .padding(.horizontal, 2)
+                }
             }
-            .padding(.horizontal)
+            .padding(.vertical, name.isEmpty ? 0 : 3)
 
             HStack(spacing: 0) {
                 Spacer().frame(width: 40)

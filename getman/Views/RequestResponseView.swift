@@ -63,9 +63,11 @@ struct RequestResponseView: View {
         KeyValuePair(key: "", value: "")
     ]
     @State private var headersKvPairs: [KeyValuePair] = [
-        KeyValuePair(key: "Accept", value: "application/json", isHidden: true),
-        KeyValuePair(key: "Content-Type", value: "application/json", isHidden: true),
+        KeyValuePair(key: "Cache-Control", value: "no-cache", isHidden: true),
         KeyValuePair(key: "User-Agent", value: "Getman/1.0", isHidden: true),
+        KeyValuePair(key: "Accept", value: "*/*", isHidden: true),
+        KeyValuePair(key: "Accept-Encoding", value: "gzip, deflate, br", isHidden: true),
+        KeyValuePair(key: "Connection", value: "keep-alive", isHidden: true),
         KeyValuePair(key: "", value: ""),
     ]
     @State private var formKvPairs: [KeyValuePair] = [
@@ -222,13 +224,11 @@ struct RequestResponseView: View {
 
             TabView(selection: $selectedInputTab) {
                 VStack {
-                    Text("Query Params")
-                        .font(.system(.headline, design: .monospaced))
-                        .fontWeight(.semibold)
-                        .frame(height: 25)
                     KeyValueEditor(
+                        name: "Query Params",
                         pairs: $paramsKvPairs,
                         isMultiPart: false,
+                        isHeadersEditor: false,
                         onPairsChanged: {
                             updateURLWithParameters()
                         }
@@ -239,13 +239,11 @@ struct RequestResponseView: View {
                 .tag(0)
 
                 VStack {
-                    Text("Headers")
-                        .font(.system(.headline, design: .monospaced))
-                        .fontWeight(.semibold)
-                        .frame(height: 25)
                     KeyValueEditor(
+                        name: "Headers",
                         pairs: $headersKvPairs,
                         isMultiPart: false,
+                        isHeadersEditor: true,
                         onPairsChanged: {}
                     )
                 }
@@ -280,14 +278,16 @@ struct RequestResponseView: View {
                             updateParametersFromURL()
                         }
                     }
-                    .frame(height: 25)
+                    .padding(.bottom, 11)
 
                     ZStack {
                         // Main content
                         if selectedBodyType == .urlEncoded || selectedBodyType == .multiPart {
                             KeyValueEditor(
+                                name: "",
                                 pairs: $formKvPairs,
                                 isMultiPart: selectedBodyType == .multiPart,
+                                isHeadersEditor: false,
                                 onPairsChanged: {}
                             )
                         } else if selectedBodyType == .noBody {
