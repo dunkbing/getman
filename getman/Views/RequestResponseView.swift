@@ -31,7 +31,7 @@ struct LazyView<Content: View>: View {
     }
 }
 
-enum BodyType: String, CaseIterable {
+enum BodyType: String, CaseIterable, Codable {
     case urlEncoded = "Url Encoded"
     case multiPart = "Multi-Part"
     case json = "JSON"
@@ -86,6 +86,7 @@ struct RequestResponseView: View {
     }
 
     func sendRequest() async {
+        saveRequest()
         guard let url = URL(string: currentURL) else { return }
 
         var urlRequest = URLRequest(url: url)
@@ -138,6 +139,29 @@ struct RequestResponseView: View {
             }
         }
         task?.resume()
+    }
+
+    private func saveRequest() {
+        request.url = currentURL
+        request.method = selectedMethod
+        request.headersKvPairs = headersKvPairs
+        request.paramsKvPairs = paramsKvPairs
+        request.formKvPairs = formKvPairs
+        request.bodyType = selectedBodyType
+        request.bodyContent = bodyContent
+        request.lastModified = Date()
+
+        appModel.save()
+    }
+
+    private func loadSavedData() {
+        currentURL = request.url
+        selectedMethod = request.method
+        headersKvPairs = request.headersKvPairs
+        paramsKvPairs = request.paramsKvPairs
+        formKvPairs = request.formKvPairs
+        selectedBodyType = request.bodyType
+        bodyContent = request.bodyContent
     }
 
     func cancelRequest() {
@@ -323,6 +347,9 @@ struct RequestResponseView: View {
         }
         .padding()
         .frame(minWidth: 400)
+        .onAppear {
+            loadSavedData()
+        }
     }
 
     @ViewBuilder

@@ -7,14 +7,6 @@
 
 import SwiftUI
 
-struct KeyValuePair: Identifiable {
-    let id = UUID()
-    var key: String
-    var value: String
-    var isEnabled: Bool = true
-    var isHidden: Bool = false
-}
-
 struct FocusField: Hashable {
     let pairId: UUID
     let isKey: Bool

@@ -6,25 +6,64 @@
 //
 
 import Foundation
+import SwiftData
 import SwiftUI
 
+@MainActor
 class AppModel: ObservableObject {
     typealias Selection = Set<Item.Id>
 
+    private let modelContainer: ModelContainer
+    private let modelContext: ModelContext
+
+    @Published var bootstrapRoot: Item
+    @Published var isDragging: Bool = false
+    @Published var selectedRequestId: UUID?
+    @Published var isEmpty: Bool = true
+
     init() {
-        bootstrapRoot = Item("__BOOTSTRAP_ROOT_ITEM")
-        isEmpty = bootstrapRoot.children?.isEmpty ?? true
+        do {
+            let schema = Schema([Item.self, APIRequest.self, KeyValuePair.self])
+            let modelConfiguration = ModelConfiguration(schema: schema)
+            modelContainer = try ModelContainer(for: schema, configurations: [modelConfiguration])
+            modelContext = modelContainer.mainContext
+
+            // Try to load existing root item
+            let descriptor = FetchDescriptor<Item>(
+                predicate: #Predicate<Item> { item in
+                    item.parent == nil
+                }
+            )
+
+            let existingRoots = try modelContext.fetch(descriptor)
+
+            if let existingRoot = existingRoots.first {
+                bootstrapRoot = existingRoot
+            } else {
+                bootstrapRoot = Item("__BOOTSTRAP_ROOT_ITEM")
+                modelContext.insert(bootstrapRoot)
+                try modelContext.save()
+            }
+
+            isEmpty = bootstrapRoot.children?.isEmpty ?? true
+
+        } catch {
+            fatalError("Failed to create ModelContainer: \(error.localizedDescription)")
+        }
+    }
+
+    func save() {
+        do {
+            try modelContext.save()
+        } catch {
+            print("Failed to save context: \(error.localizedDescription)")
+        }
     }
 
     func addChild(item: Item) {
         bootstrapRoot.adopt(child: item)
         updateIsEmpty()
     }
-
-    @Published var isDragging: Bool = false
-    @Published var bootstrapRoot: Item
-    @Published var selectedRequestId: UUID?
-    @Published var isEmpty: Bool = true
 
     private func updateIsEmpty() {
         isEmpty = bootstrapRoot.children?.isEmpty ?? true
@@ -140,38 +179,40 @@ class AppModel: ObservableObject {
     }
 }
 
-class Item: ObservableObject, Identifiable, Equatable {
+@Model
+final class Item: ObservableObject, Identifiable, Equatable {
     typealias Id = UUID
 
     static func == (lhs: Item, rhs: Item) -> Bool {
         lhs.id == rhs.id
     }
 
-    let id = Id()
-    let isFolder: Bool
-    let name: String
+    var id: UUID
+    var name: String
+    var isFolder: Bool
     var request: APIRequest?
-
-    @Published var children: [Item]?
-    @Published var parent: Item?
-    @Published var read: Bool
+    var children: [Item]?
+    var parent: Item?
+    var read: Bool
 
     init(
+        id: UUID = UUID(),
         _ name: String,
         request: APIRequest? = nil,
         isFolder: Bool = false,
         children: [Item]? = nil,
         read: Bool = false
     ) {
+        self.id = id
         self.name = name
         self.isFolder = isFolder
         self.children = children
         self.read = read
         self.request = request
 
-        self.children?.forEach({ item in
+        self.children?.forEach { item in
             item.parent = self
-        })
+        }
     }
 
     func adopt(child adopteeItem: Item) {
