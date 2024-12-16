@@ -5,17 +5,48 @@
 //  Created by Bùi Đặng Bình on 2/12/24.
 //
 
+import CodeEditSourceEditor
 import SwiftUI
-import SwiftyMonaco
 
-struct MonacoEditorView: View {
+struct CodeEditorView: View {
     @Binding var text: String
 
+    @State var theme = EditorTheme(
+        text: NSColor.labelColor,
+        insertionPoint: NSColor.systemBlue,
+        invisibles: NSColor.systemGray,
+        background: NSColor.windowBackgroundColor,
+        lineHighlight: NSColor.controlAccentColor.withAlphaComponent(0.2),
+        selection: NSColor.selectedTextBackgroundColor,
+        keywords: NSColor.systemBlue,
+        commands: NSColor.systemRed,
+        types: NSColor.systemGreen,
+        attributes: NSColor.systemOrange,
+        variables: NSColor.systemPurple,
+        values: NSColor.systemTeal,
+        numbers: NSColor.systemYellow,
+        strings: NSColor.systemPink,
+        characters: NSColor.systemBrown,
+        comments: NSColor.systemGray
+    )
+    @State var font = NSFont.monospacedSystemFont(ofSize: 11, weight: .regular)
+    @State var tabWidth = 4
+    @State var lineHeight = 1.2
+    @State var editorOverscroll = 0.3
+    @State var cursorPositions = [CursorPosition(line: 0, column: 0)]
+
     var body: some View {
-        SwiftyMonaco(text: $text)
-            .minimap(false)
-            .syntaxHighlight(.systemVerilog)
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
+        CodeEditSourceEditor(
+            $text,
+            language: .json,
+            theme: theme,
+            font: font,
+            tabWidth: tabWidth,
+            lineHeight: lineHeight,
+            wrapLines: false,
+            editorOverscroll: editorOverscroll,
+            cursorPositions: $cursorPositions
+        )
     }
 }
 
@@ -335,7 +366,7 @@ struct RequestResponseView: View {
                         }
 
                         // Monaco editor is always present but only visible when needed
-                        LazyView(MonacoEditorView(text: $bodyContent))
+                        LazyView(CodeEditorView(text: $bodyContent))
                             .opacity(isTextContentType ? 1 : 0)
                             .allowsHitTesting(isTextContentType)
                     }

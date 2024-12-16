@@ -3,11 +3,11 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 77;
+	objectVersion = 70;
 	objects = {
 
 /* Begin PBXBuildFile section */
-		C3CF702E2CFD81D400416753 /* SwiftyMonaco in Frameworks */ = {isa = PBXBuildFile; productRef = C3CF702D2CFD81D400416753 /* SwiftyMonaco */; };
+		C399CDCF2D106788002A7293 /* CodeEditSourceEditor in Frameworks */ = {isa = PBXBuildFile; productRef = C399CDCE2D106788002A7293 /* CodeEditSourceEditor */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -15,11 +15,7 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
-		C35BCE1B2CF9A5080028B473 /* getman */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			path = getman;
-			sourceTree = "<group>";
-		};
+		C35BCE1B2CF9A5080028B473 /* getman */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = getman; sourceTree = "<group>"; };
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -27,7 +23,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				C3CF702E2CFD81D400416753 /* SwiftyMonaco in Frameworks */,
+				C399CDCF2D106788002A7293 /* CodeEditSourceEditor in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -78,7 +74,7 @@
 			);
 			name = getman;
 			packageProductDependencies = (
-				C3CF702D2CFD81D400416753 /* SwiftyMonaco */,
+				C399CDCE2D106788002A7293 /* CodeEditSourceEditor */,
 			);
 			productName = getapi;
 			productReference = C35BCE192CF9A5080028B473 /* getman.app */;
@@ -100,6 +96,7 @@
 				};
 			};
 			buildConfigurationList = C35BCE142CF9A5080028B473 /* Build configuration list for PBXProject "getman" */;
+			compatibilityVersion = "Xcode 15.3";
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
@@ -109,9 +106,8 @@
 			mainGroup = C35BCE102CF9A5080028B473;
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
-				C3CF702C2CFD81D400416753 /* XCRemoteSwiftPackageReference "SwiftyMonaco" */,
+				C399CDCD2D106788002A7293 /* XCRemoteSwiftPackageReference "CodeEditSourceEditor" */,
 			);
-			preferredProjectObjectVersion = 77;
 			productRefGroup = C35BCE1A2CF9A5080028B473 /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
@@ -346,21 +342,21 @@
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
-		C3CF702C2CFD81D400416753 /* XCRemoteSwiftPackageReference "SwiftyMonaco" */ = {
+		C399CDCD2D106788002A7293 /* XCRemoteSwiftPackageReference "CodeEditSourceEditor" */ = {
 			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/ICToolkit/SwiftyMonaco";
+			repositoryURL = "https://github.com/CodeEditApp/CodeEditSourceEditor";
 			requirement = {
-				branch = main;
-				kind = branch;
+				kind = upToNextMajorVersion;
+				minimumVersion = 0.9.0;
 			};
 		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
-		C3CF702D2CFD81D400416753 /* SwiftyMonaco */ = {
+		C399CDCE2D106788002A7293 /* CodeEditSourceEditor */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = C3CF702C2CFD81D400416753 /* XCRemoteSwiftPackageReference "SwiftyMonaco" */;
-			productName = SwiftyMonaco;
+			package = C399CDCD2D106788002A7293 /* XCRemoteSwiftPackageReference "CodeEditSourceEditor" */;
+			productName = CodeEditSourceEditor;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};
