@@ -10,6 +10,7 @@ import SwiftUI
 
 struct CodeEditorView: View {
     @Binding var text: String
+    let editable: Bool
 
     @State var theme = EditorTheme(
         text: NSColor.labelColor,
@@ -45,7 +46,8 @@ struct CodeEditorView: View {
             lineHeight: lineHeight,
             wrapLines: false,
             editorOverscroll: editorOverscroll,
-            cursorPositions: $cursorPositions
+            cursorPositions: $cursorPositions,
+            isEditable: editable
         )
     }
 }
@@ -85,6 +87,9 @@ struct RequestResponseView: View {
     @State private var selectedMethod: HTTPMethod
     @State private var response: APIResponse?
     @State private var statusText = ""
+    @State private var statusCode = ""
+    @State private var requestTime = ""
+    @State private var responseSize = ""
     @State private var isLoading = false
     @State private var isSending = false
     @State private var task: URLSessionTask?
@@ -145,7 +150,6 @@ struct RequestResponseView: View {
         let startTime = Date()
         isLoading = true
         isSending = true
-        statusText = "connecting - 0s - 0B"
 
         let session = URLSession.shared
         task = session.dataTask(with: urlRequest) { data, response, error in
@@ -165,8 +169,9 @@ struct RequestResponseView: View {
                 self.selectedResponseTab = 0
                 self.isLoading = false
                 self.isSending = false
-                self.statusText =
-                    "\(httpResponse.statusCode) OK - \(String(format: "%.2f", requestTime))s - \(responseSize) B"
+                self.statusCode = "\(httpResponse.statusCode) OK"
+                self.requestTime = "\(String(format: "%.2f", requestTime))s"
+                self.responseSize = "\(responseSize) B"
             }
         }
         task?.resume()
@@ -365,8 +370,7 @@ struct RequestResponseView: View {
                                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                         }
 
-                        // Monaco editor is always present but only visible when needed
-                        LazyView(CodeEditorView(text: $bodyContent))
+                        LazyView(CodeEditorView(text: $bodyContent, editable: true))
                             .opacity(isTextContentType ? 1 : 0)
                             .allowsHitTesting(isTextContentType)
                     }
@@ -388,11 +392,6 @@ struct RequestResponseView: View {
         VStack {
             HStack {
                 ZStack(alignment: .leading) {
-                    Text(statusText)
-                        .font(.headline)
-                        .foregroundColor(.gray)
-                        .opacity(isLoading ? 0 : 1)
-
                     if isLoading {
                         HStack {
                             CircularLoadingIndicator()
@@ -402,10 +401,40 @@ struct RequestResponseView: View {
                             Text("Sending")
                         }
                         .transition(.opacity)
+                    } else {
+                        HStack {
+                            Text(statusCode)
+                                .font(.subheadline)
+                                .padding(.horizontal, 5)
+                                .padding(.vertical, 4)
+                                .background(
+                                    statusCodeColor(for: statusCode)
+                                )
+                                .cornerRadius(5)
+                                .foregroundColor(.white)
+
+                            Text(requestTime)
+                                .foregroundColor(.gray)
+                                .font(.subheadline)
+
+                            Text(responseSize)
+                                .foregroundColor(.gray)
+                                .font(.subheadline)
+
+                            Image(systemName: "network")
+                                .foregroundColor(.gray)
+                                .onHover { inside in
+                                    if inside {
+                                        print("Local Address: ...")
+                                        print("Remote Address: ...")
+                                        print("HTTP Version: ...")
+                                    }
+                                }
+                        }
                     }
                 }
             }
-            .padding(.vertical, 8)
+            .padding(.vertical, 5)
 
             if response == nil {
                 VStack(spacing: 16) {
@@ -435,10 +464,7 @@ struct RequestResponseView: View {
                                 withJSONObject: json, options: .prettyPrinted),
                             let prettyString = String(data: prettyData, encoding: .utf8)
                         {
-                            Text(prettyString)
-                                .font(.system(.body, design: .monospaced))
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                                .padding()
+                            CodeEditorView(text: .constant(prettyString), editable: false)
                         }
                     }
                     .tabItem { Text("Pretty") }
@@ -495,6 +521,25 @@ struct RequestResponseView: View {
         }
         .frame(minWidth: 300)
         .padding()
+    }
+
+    private func statusCodeColor(for statusCode: String) -> Color {
+        guard let code = Int(statusCode.split(separator: " ").first ?? "") else {
+            return .gray
+        }
+
+        switch code {
+        case 200..<300:
+            return .green
+        case 300..<400:
+            return .blue
+        case 400..<500:
+            return .orange
+        case 500..<600:
+            return .red
+        default:
+            return .gray
+        }
     }
 
     var body: some View {

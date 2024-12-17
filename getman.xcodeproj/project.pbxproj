@@ -3,7 +3,7 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 70;
+	objectVersion = 77;
 	objects = {
 
 /* Begin PBXBuildFile section */
@@ -15,7 +15,11 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
-		C35BCE1B2CF9A5080028B473 /* getman */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = getman; sourceTree = "<group>"; };
+		C35BCE1B2CF9A5080028B473 /* getman */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = getman;
+			sourceTree = "<group>";
+		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -96,7 +100,6 @@
 				};
 			};
 			buildConfigurationList = C35BCE142CF9A5080028B473 /* Build configuration list for PBXProject "getman" */;
-			compatibilityVersion = "Xcode 15.3";
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
@@ -108,6 +111,7 @@
 			packageReferences = (
 				C399CDCD2D106788002A7293 /* XCRemoteSwiftPackageReference "CodeEditSourceEditor" */,
 			);
+			preferredProjectObjectVersion = 77;
 			productRefGroup = C35BCE1A2CF9A5080028B473 /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
