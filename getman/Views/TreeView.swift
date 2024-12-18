@@ -179,6 +179,35 @@ class AppModel: ObservableObject {
     }
 }
 
+extension AppModel {
+    func createNewRequest(parentItem: Item?) -> APIRequest {
+        let request = APIRequest(
+            name: "New Request",
+            url: "",
+            method: .GET
+        )
+        let item = Item("New Request", request: request)
+
+        if let parent = parentItem {
+            parent.adopt(child: item)
+        } else {
+            addChild(item: item)
+        }
+        save()
+        return request
+    }
+
+    func createNewFolder(parentItem: Item?) {
+        let folder = Item("New Folder", isFolder: true)
+        if let parent = parentItem {
+            parent.adopt(child: folder)
+        } else {
+            addChild(item: folder)
+        }
+        save()
+    }
+}
+
 @Model
 final class Item: ObservableObject, Identifiable, Equatable {
     typealias Id = UUID
@@ -350,6 +379,23 @@ struct Node: View {
                     .onDrag {
                         appModel.providerEncode(id: childItem.id)
                     }
+                    .contextMenu {
+                        Button("New Request") {
+                            let request = appModel.createNewRequest(parentItem: parent)
+                            onRequestSelected(request)
+                            appModel.selectedRequestId = request.id
+                        }
+                        Button("New Folder") {
+                            appModel.createNewFolder(parentItem: parent)
+                        }
+                        Divider()
+                        Button("Delete", role: .destructive) {
+                            if let parentChildren = parent.children {
+                                parent.children = parentChildren.filter { $0.id != childItem.id }
+                                appModel.save()
+                            }
+                        }
+                    }
                 } else {
                     Parent(item: childItem, onRequestSelected: onRequestSelected)
                 }
@@ -385,6 +431,27 @@ struct Parent: View, DropDelegate {
             }
         }
         .onDrop(of: [.text], delegate: self)
+        .contextMenu {
+            Button("New Request") {
+                let request = appModel.createNewRequest(parentItem: item)
+                onRequestSelected(request)
+                appModel.selectedRequestId = request.id
+            }
+            Button("New Folder") {
+                appModel.createNewFolder(parentItem: item)
+            }
+            if item.parent != nil {
+                Divider()
+                Button("Delete", role: .destructive) {
+                    if let parentItem = item.parent,
+                        let parentChildren = parentItem.children
+                    {
+                        parentItem.children = parentChildren.filter { $0.id != item.id }
+                        appModel.save()
+                    }
+                }
+            }
+        }
     }
 
     func dropEntered(info: DropInfo) {

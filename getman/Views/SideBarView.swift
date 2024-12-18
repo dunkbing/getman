@@ -19,6 +19,16 @@ struct SideBarView: View {
         Group {
             if appModel.isEmpty {
                 EmptySideBarView()
+                    .contextMenu {
+                        Button("New Request") {
+                            let request = appModel.createNewRequest(parentItem: nil)
+                            onRequestSelected(request)
+                            appModel.selectedRequestId = request.id
+                        }
+                        Button("New Folder") {
+                            appModel.createNewFolder(parentItem: nil)
+                        }
+                    }
             } else {
                 VStack {
                     List(selection: $selectionIds) {
@@ -28,6 +38,16 @@ struct SideBarView: View {
                         }
                     }
                     .listStyle(.sidebar)
+                    .contextMenu {
+                        Button("New Request") {
+                            let request = appModel.createNewRequest(parentItem: nil)
+                            onRequestSelected(request)
+                            appModel.selectedRequestId = request.id
+                        }
+                        Button("New Folder") {
+                            appModel.createNewFolder(parentItem: nil)
+                        }
+                    }
                     SearchBar(searchText: $searchText)
                 }
             }
