@@ -12,24 +12,49 @@ struct CodeEditorView: View {
     @Binding var text: String
     let editable: Bool
 
-    @State var theme = EditorTheme(
-        text: NSColor.labelColor,
-        insertionPoint: NSColor.systemBlue,
-        invisibles: NSColor.systemGray,
-        background: NSColor.windowBackgroundColor,
-        lineHighlight: NSColor.controlAccentColor.withAlphaComponent(0.2),
-        selection: NSColor.selectedTextBackgroundColor,
-        keywords: NSColor.systemBlue,
-        commands: NSColor.systemRed,
-        types: NSColor.systemGreen,
-        attributes: NSColor.systemOrange,
-        variables: NSColor.systemPurple,
-        values: NSColor.systemTeal,
-        numbers: NSColor.systemYellow,
-        strings: NSColor.systemPink,
-        characters: NSColor.systemBrown,
-        comments: NSColor.systemGray
-    )
+    @Environment(\.colorScheme) var colorScheme
+
+    var theme: EditorTheme {
+        if colorScheme == .dark {
+            return EditorTheme(
+                text: CatppuccinPalette.Mocha.text,
+                insertionPoint: CatppuccinPalette.Mocha.rosewater,
+                invisibles: CatppuccinPalette.Mocha.surface2,
+                background: CatppuccinPalette.Mocha.base,
+                lineHighlight: CatppuccinPalette.Mocha.surface2.withAlphaComponent(0.15),
+                selection: CatppuccinPalette.Mocha.surface2.withAlphaComponent(0.3),
+                keywords: CatppuccinPalette.Mocha.mauve,
+                commands: CatppuccinPalette.Mocha.red,
+                types: CatppuccinPalette.Mocha.blue,
+                attributes: CatppuccinPalette.Mocha.teal,
+                variables: CatppuccinPalette.Mocha.lavender,
+                values: CatppuccinPalette.Mocha.peach,
+                numbers: CatppuccinPalette.Mocha.peach,
+                strings: CatppuccinPalette.Mocha.green,
+                characters: CatppuccinPalette.Mocha.teal,
+                comments: CatppuccinPalette.Mocha.surface2
+            )
+        } else {
+            return EditorTheme(
+                text: CatppuccinPalette.Latte.text,
+                insertionPoint: CatppuccinPalette.Latte.rosewater,
+                invisibles: CatppuccinPalette.Latte.surface2,
+                background: CatppuccinPalette.Latte.base,
+                lineHighlight: CatppuccinPalette.Latte.surface2.withAlphaComponent(0.15),
+                selection: CatppuccinPalette.Latte.surface2.withAlphaComponent(0.3),
+                keywords: CatppuccinPalette.Latte.mauve,
+                commands: CatppuccinPalette.Latte.red,
+                types: CatppuccinPalette.Latte.blue,
+                attributes: CatppuccinPalette.Latte.teal,
+                variables: CatppuccinPalette.Latte.lavender,
+                values: CatppuccinPalette.Latte.peach,
+                numbers: CatppuccinPalette.Latte.peach,
+                strings: CatppuccinPalette.Latte.green,
+                characters: CatppuccinPalette.Latte.teal,
+                comments: CatppuccinPalette.Latte.surface2
+            )
+        }
+    }
     @State var font = NSFont.monospacedSystemFont(ofSize: 11, weight: .regular)
     @State var tabWidth = 4
     @State var lineHeight = 1.2
@@ -49,6 +74,9 @@ struct CodeEditorView: View {
             cursorPositions: $cursorPositions,
             isEditable: editable
         )
+        .scrollDisabled(false)
+        .padding(.horizontal)
+        .padding(.bottom)
     }
 }
 
@@ -364,15 +392,14 @@ struct RequestResponseView: View {
                         } else if selectedBodyType == .json || selectedBodyType == .graphQL
                             || selectedBodyType == .xml || selectedBodyType == .other
                         {
-                            Color.clear
+                            CodeEditorView(text: $bodyContent, editable: true)
                         } else {
                             Text("Content for \(selectedBodyType.rawValue)")
                                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                         }
-
-                        LazyView(CodeEditorView(text: $bodyContent, editable: true))
-                            .opacity(isTextContentType ? 1 : 0)
-                            .allowsHitTesting(isTextContentType)
+                        //                        LazyView()
+                        //                            .opacity(isTextContentType ? 1 : 0)
+                        //                            .allowsHitTesting(isTextContentType)
                     }
                 }
                 .padding(.top, 8)
