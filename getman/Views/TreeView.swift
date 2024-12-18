@@ -337,6 +337,7 @@ struct Node: View {
     @EnvironmentObject var appModel: AppModel
     @StateObject var parent: Item
     let onRequestSelected: (APIRequest) -> Void
+    let onRequestDeleted: (UUID) -> Void
 
     var body: some View {
         ForEach(parent.children ?? []) { (childItem: Item) in
@@ -392,12 +393,19 @@ struct Node: View {
                         Button("Delete", role: .destructive) {
                             if let parentChildren = parent.children {
                                 parent.children = parentChildren.filter { $0.id != childItem.id }
+                                if let requestId = childItem.request?.id {
+                                    onRequestDeleted(requestId)
+                                }
                                 appModel.save()
                             }
                         }
                     }
                 } else {
-                    Parent(item: childItem, onRequestSelected: onRequestSelected)
+                    Parent(
+                        item: childItem,
+                        onRequestSelected: onRequestSelected,
+                        onRequestDeleted: onRequestDeleted
+                    )
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
@@ -410,13 +418,18 @@ struct Parent: View, DropDelegate {
     @EnvironmentObject var appModel: AppModel
     @ObservedObject var item: Item
     let onRequestSelected: (APIRequest) -> Void
+    let onRequestDeleted: (UUID) -> Void
 
     @State private var isExpanded: Bool = false
     @State internal var isTargeted: Bool = false
 
     var body: some View {
         DisclosureGroup(isExpanded: $isExpanded) {
-            Node(parent: item, onRequestSelected: onRequestSelected)
+            Node(
+                parent: item,
+                onRequestSelected: onRequestSelected,
+                onRequestDeleted: onRequestDeleted
+            )
         } label: {
             Group {
                 if item.parent == nil {
@@ -446,12 +459,29 @@ struct Parent: View, DropDelegate {
                     if let parentItem = item.parent,
                         let parentChildren = parentItem.children
                     {
+                        // collect all request IDs
+                        let requestIds = collectRequestIds(from: item)
                         parentItem.children = parentChildren.filter { $0.id != item.id }
+                        // remove all requests in the folder from tabs
+                        requestIds.forEach { onRequestDeleted($0) }
                         appModel.save()
                     }
                 }
             }
         }
+    }
+
+    private func collectRequestIds(from item: Item) -> [UUID] {
+        var ids: [UUID] = []
+        if let request = item.request {
+            ids.append(request.id)
+        }
+        if let children = item.children {
+            for child in children {
+                ids.append(contentsOf: collectRequestIds(from: child))
+            }
+        }
+        return ids
     }
 
     func dropEntered(info: DropInfo) {

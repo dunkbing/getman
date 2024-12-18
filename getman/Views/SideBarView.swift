@@ -14,6 +14,7 @@ struct SideBarView: View {
     @Binding var selectedReqId: UUID?
 
     let onRequestSelected: (APIRequest) -> Void
+    let onRequestDeleted: (UUID) -> Void
 
     var body: some View {
         Group {
@@ -32,10 +33,14 @@ struct SideBarView: View {
             } else {
                 VStack {
                     List(selection: $selectionIds) {
-                        Node(parent: appModel.bootstrapRoot) { req in
-                            selectedReqId = req.id
-                            onRequestSelected(req)
-                        }
+                        Node(
+                            parent: appModel.bootstrapRoot,
+                            onRequestSelected: { req in
+                                selectedReqId = req.id
+                                onRequestSelected(req)
+                            },
+                            onRequestDeleted: onRequestDeleted
+                        )
                     }
                     .listStyle(.sidebar)
                     .contextMenu {

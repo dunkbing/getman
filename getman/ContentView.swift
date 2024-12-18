@@ -27,7 +27,8 @@ struct ContentView: View {
                     selectionIds: $selectionIds,
                     searchText: $searchText,
                     selectedReqId: $selectedReqId,
-                    onRequestSelected: openRequest
+                    onRequestSelected: openRequest,
+                    onRequestDeleted: removeTab
                 )
             }
             .frame(minWidth: 200, maxWidth: 300)
@@ -126,6 +127,15 @@ struct ContentView: View {
         if let index = tabs.firstIndex(of: tab) {
             tabs.remove(at: index)
             if selectedReqId == tab.id {
+                selectedReqId = tabs.last?.id
+            }
+        }
+    }
+
+    private func removeTab(_ requestId: UUID) {
+        if let index = tabs.firstIndex(where: { $0.id == requestId }) {
+            tabs.remove(at: index)
+            if selectedReqId == requestId {
                 selectedReqId = tabs.last?.id
             }
         }
