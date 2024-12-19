@@ -345,18 +345,17 @@ struct Node: View {
                 if childItem.isFolder == false {
                     let req = childItem.request
                     let method = req?.method ?? .GET
-                    HStack(spacing: 5) {
+                    HStack(spacing: 3) {
                         Text(method.rawValue)
                             .font(.caption)
                             .bold()
                             .foregroundColor(method.color)
-                            .frame(minWidth: 48)
-                            .padding(.leading, 3.5)
+                            .frame(minWidth: 46, alignment: .leading)
+                            .padding(.leading, 4)
 
                         Text(childItem.name)
                     }
                     .padding(.vertical, 3)
-                    .padding(.leading, 4)
                     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
                     .background(
                         RoundedRectangle(cornerRadius: 6)
@@ -366,7 +365,6 @@ struct Node: View {
                                     : Color.clear
                             )
                     )
-                    .contentShape(Rectangle())
                     .onTapGesture {
                         if let request = childItem.request {
                             onRequestSelected(request)
@@ -442,6 +440,7 @@ struct Parent: View, DropDelegate {
                         }
                 }
             }
+            .padding(.leading, 3.5)
         }
         .onDrop(of: [.text], delegate: self)
         .contextMenu {
