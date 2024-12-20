@@ -338,6 +338,10 @@ struct Node: View {
     @StateObject var parent: Item
     let onRequestSelected: (APIRequest) -> Void
     let onRequestDeleted: (UUID) -> Void
+    @State private var isEditing = false
+    @State private var newName = ""
+
+    @FocusState private var isTextFieldFocused: Bool
 
     var body: some View {
         ForEach(parent.children ?? []) { (childItem: Item) in
@@ -353,10 +357,30 @@ struct Node: View {
                             .frame(minWidth: 46, alignment: .leading)
                             .padding(.leading, 4)
 
-                        Text(childItem.name)
+                        if isEditing && appModel.selectedRequestId == childItem.request?.id {
+                            TextField(
+                                "Name", text: $newName,
+                                onCommit: {
+                                    if !newName.isEmpty {
+                                        childItem.name = newName
+                                        appModel.save()
+                                    }
+                                    isEditing = false
+                                    isTextFieldFocused = false
+                                }
+                            )
+                            .textFieldStyle(RoundedBorderTextFieldStyle())
+                            .focused($isTextFieldFocused)
+                            .onAppear {
+                                isTextFieldFocused = true
+                            }
+                        } else {
+                            Text(childItem.name)
+                        }
                     }
                     .padding(.vertical, 3)
                     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
+                    .contentShape(Rectangle())
                     .background(
                         RoundedRectangle(cornerRadius: 6)
                             .fill(
@@ -379,6 +403,10 @@ struct Node: View {
                         appModel.providerEncode(id: childItem.id)
                     }
                     .contextMenu {
+                        Button("Rename") {
+                            newName = childItem.name
+                            isEditing = true
+                        }
                         Button("New Request") {
                             let request = appModel.createNewRequest(parentItem: parent)
                             onRequestSelected(request)
@@ -420,6 +448,10 @@ struct Parent: View, DropDelegate {
 
     @State private var isExpanded: Bool = false
     @State internal var isTargeted: Bool = false
+    @State private var isEditing = false
+    @State private var newName = ""
+
+    @FocusState private var isTextFieldFocused: Bool
 
     var body: some View {
         DisclosureGroup(isExpanded: $isExpanded) {
@@ -433,17 +465,38 @@ struct Parent: View, DropDelegate {
                 if item.parent == nil {
                     Label(item.name, systemImage: "folder.badge.questionmark")
                 } else {
-                    Label(item.name, systemImage: "folder")
-                        .background(isTargeted ? Color.accentColor.opacity(0.2) : Color.clear)
-                        .onDrag {
-                            appModel.providerEncode(id: item.id)
+                    if isEditing {
+                        TextField(
+                            "Name", text: $newName,
+                            onCommit: {
+                                if !newName.isEmpty {
+                                    item.name = newName
+                                    appModel.save()
+                                }
+                                isEditing = false
+                                isTextFieldFocused = false
+                            }
+                        )
+                        .textFieldStyle(RoundedBorderTextFieldStyle())
+                        .focused($isTextFieldFocused)
+                        .onAppear {
+                            isTextFieldFocused = true
                         }
+                    } else {
+                        Label(item.name, systemImage: "folder")
+                    }
                 }
             }
             .padding(.leading, 3.5)
         }
         .onDrop(of: [.text], delegate: self)
         .contextMenu {
+            if item.parent != nil {
+                Button("Rename") {
+                    newName = item.name
+                    isEditing = true
+                }
+            }
             Button("New Request") {
                 let request = appModel.createNewRequest(parentItem: item)
                 onRequestSelected(request)
@@ -458,7 +511,6 @@ struct Parent: View, DropDelegate {
                     if let parentItem = item.parent,
                         let parentChildren = parentItem.children
                     {
-                        // collect all request IDs
                         let requestIds = collectRequestIds(from: item)
                         parentItem.children = parentChildren.filter { $0.id != item.id }
                         // remove all requests in the folder from tabs
