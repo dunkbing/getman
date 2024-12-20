@@ -488,6 +488,21 @@ struct Parent: View, DropDelegate {
                 }
             }
             .padding(.leading, 3.5)
+            .padding(.vertical, 2)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(
+                RoundedRectangle(cornerRadius: 6)
+                    .fill(isTargeted ? Color.accentColor.opacity(0.3) : Color.clear)
+                    .animation(.easeInOut(duration: 0.2), value: isTargeted)
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 6)
+                    .stroke(
+                        isTargeted ? Color.accentColor : Color.clear,
+                        lineWidth: 2
+                    )
+                    .animation(.easeInOut(duration: 0.2), value: isTargeted)
+            )
         }
         .onDrop(of: [.text], delegate: self)
         .contextMenu {
