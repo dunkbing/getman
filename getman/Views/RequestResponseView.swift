@@ -125,18 +125,7 @@ struct NetworkDetailsOverlay: View {
             }
             .font(.system(.subheadline, design: .monospaced))
         }
-        .padding(10)
-        .background(
-            RoundedRectangle(cornerRadius: 8)
-                .fill(Color(NSColor.windowBackgroundColor))
-                .shadow(radius: 2)
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: 8)
-                .stroke(Color.gray.opacity(0.2), lineWidth: 1)
-        )
-        .fixedSize(horizontal: true, vertical: true)
-        .frame(minWidth: 250)
+        .padding(15)
     }
 }
 
@@ -479,13 +468,13 @@ struct RequestResponseView: View {
                         HStack {
                             Text(statusCode)
                                 .font(.subheadline)
-                                .padding(.horizontal, 5)
-                                .padding(.vertical, 4)
+                                .padding(.horizontal, 4)
+                                .padding(.vertical, 2)
                                 .background(
-                                    statusCodeColor(for: statusCode)
+                                    statusCodeColor(for: statusCode).opacity(0.2)
                                 )
                                 .cornerRadius(5)
-                                .foregroundColor(.white)
+                                .foregroundColor(statusCodeColor(for: statusCode))
 
                             Text(requestTime)
                                 .foregroundColor(.gray)
@@ -497,16 +486,19 @@ struct RequestResponseView: View {
 
                             Image(systemName: "network")
                                 .foregroundColor(.gray)
-                                .overlay(
-                                    Group {
-                                        if showNetworkDetails {
-                                            NetworkDetailsOverlay(details: networkDetails)
-                                                .offset(x: -30, y: 55)
-                                        }
-                                    }
-                                )
+                                //                                .overlay(
+                                //                                    Group {
+                                //                                        if showNetworkDetails {
+                                //                                            NetworkDetailsOverlay(details: networkDetails)
+                                //                                                .offset(x: -30, y: 55)
+                                //                                        }
+                                //                                    }
+                                //                                )
                                 .onHover { inside in
                                     showNetworkDetails = inside
+                                }
+                                .popover(isPresented: $showNetworkDetails, arrowEdge: .bottom) {
+                                    NetworkDetailsOverlay(details: networkDetails)
                                 }
                         }
                     }
