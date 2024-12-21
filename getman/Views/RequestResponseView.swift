@@ -5,12 +5,14 @@
 //  Created by Bùi Đặng Bình on 2/12/24.
 //
 
+import CodeEditLanguages
 import CodeEditSourceEditor
 import SwiftUI
 
 struct CodeEditorView: View {
     @Binding var text: String
     let editable: Bool
+    let lang: CodeLanguage
 
     @Environment(\.colorScheme) var colorScheme
 
@@ -64,7 +66,7 @@ struct CodeEditorView: View {
     var body: some View {
         CodeEditSourceEditor(
             $text,
-            language: .json,
+            language: lang,
             theme: theme,
             font: font,
             tabWidth: tabWidth,
@@ -103,32 +105,6 @@ enum BodyType: String, CaseIterable, Codable {
     case noBody = "No Body"
 }
 
-struct NetworkDetails {
-    let localAddress: String
-    let remoteAddress: String
-    let httpVersion: String
-}
-
-struct NetworkDetailsOverlay: View {
-    let details: NetworkDetails?
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Group {
-                if let details = details {
-                    Text("Local Address: \(details.localAddress)")
-                    Text("Remote Address: \(details.remoteAddress)")
-                    Text("HTTP Version: \(details.httpVersion)")
-                } else {
-                    Text("Network information unavailable")
-                }
-            }
-            .font(.system(.subheadline, design: .monospaced))
-        }
-        .padding(15)
-    }
-}
-
 struct RequestResponseView: View {
     @EnvironmentObject var appModel: AppModel
     @Environment(\.colorScheme) var colorScheme
@@ -140,6 +116,7 @@ struct RequestResponseView: View {
     @State private var selectedResponseTab = 0
     @State private var selectedMethod: HTTPMethod
     @State private var response: APIResponse?
+    @State private var rawResponse: String = ""
     @State private var statusText = ""
     @State private var statusCode = ""
     @State private var requestTime = ""
@@ -228,6 +205,15 @@ struct RequestResponseView: View {
                 self.statusCode = "\(httpResponse.statusCode) OK"
                 self.requestTime = "\(String(format: "%.2f", requestTime))s"
                 self.responseSize = "\(responseSize) B"
+
+                if let data = self.response?.data,
+                    let json = try? JSONSerialization.jsonObject(with: data),
+                    let prettyData = try? JSONSerialization.data(
+                        withJSONObject: json, options: .prettyPrinted),
+                    let prettyString = String(data: prettyData, encoding: .utf8)
+                {
+                    self.rawResponse = prettyString
+                }
 
                 // Set network details
                 self.networkDetails = NetworkDetails(
@@ -427,14 +413,11 @@ struct RequestResponseView: View {
                         } else if selectedBodyType == .json || selectedBodyType == .graphQL
                             || selectedBodyType == .xml || selectedBodyType == .other
                         {
-                            CodeEditorView(text: $bodyContent, editable: true)
+                            CodeEditorView(text: $bodyContent, editable: true, lang: .json)
                         } else {
                             Text("Content for \(selectedBodyType.rawValue)")
                                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                         }
-                        //                        LazyView()
-                        //                            .opacity(isTextContentType ? 1 : 0)
-                        //                            .allowsHitTesting(isTextContentType)
                     }
                 }
                 .padding(.top, 8)
@@ -486,14 +469,6 @@ struct RequestResponseView: View {
 
                             Image(systemName: "network")
                                 .foregroundColor(.gray)
-                                //                                .overlay(
-                                //                                    Group {
-                                //                                        if showNetworkDetails {
-                                //                                            NetworkDetailsOverlay(details: networkDetails)
-                                //                                                .offset(x: -30, y: 55)
-                                //                                        }
-                                //                                    }
-                                //                                )
                                 .onHover { inside in
                                     showNetworkDetails = inside
                                 }
@@ -527,18 +502,9 @@ struct RequestResponseView: View {
             } else {
                 TabView(selection: $selectedResponseTab) {
                     // JSON View
-                    ScrollView {
-                        if let data = response?.data,
-                            let json = try? JSONSerialization.jsonObject(with: data),
-                            let prettyData = try? JSONSerialization.data(
-                                withJSONObject: json, options: .prettyPrinted),
-                            let prettyString = String(data: prettyData, encoding: .utf8)
-                        {
-                            CodeEditorView(text: .constant(prettyString), editable: false)
-                        }
-                    }
-                    .tabItem { Text("Pretty") }
-                    .tag(0)
+                    CodeEditorView(text: $rawResponse, editable: false, lang: .json)
+                        .tabItem { Text("Pretty") }
+                        .tag(0)
 
                     // Raw View
                     ScrollView {
