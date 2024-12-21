@@ -354,7 +354,7 @@ struct Node: View {
                             .font(.caption)
                             .bold()
                             .foregroundColor(method.color)
-                            .frame(minWidth: 46, alignment: .leading)
+                            .frame(minWidth: 36)
                             .padding(.leading, 4)
 
                         if isEditing && appModel.selectedRequestId == childItem.request?.id {

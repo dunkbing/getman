@@ -103,6 +103,43 @@ enum BodyType: String, CaseIterable, Codable {
     case noBody = "No Body"
 }
 
+struct NetworkDetails {
+    let localAddress: String
+    let remoteAddress: String
+    let httpVersion: String
+}
+
+struct NetworkDetailsOverlay: View {
+    let details: NetworkDetails?
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Group {
+                if let details = details {
+                    Text("Local Address: \(details.localAddress)")
+                    Text("Remote Address: \(details.remoteAddress)")
+                    Text("HTTP Version: \(details.httpVersion)")
+                } else {
+                    Text("Network information unavailable")
+                }
+            }
+            .font(.system(.subheadline, design: .monospaced))
+        }
+        .padding(10)
+        .background(
+            RoundedRectangle(cornerRadius: 8)
+                .fill(Color(NSColor.windowBackgroundColor))
+                .shadow(radius: 2)
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 8)
+                .stroke(Color.gray.opacity(0.2), lineWidth: 1)
+        )
+        .fixedSize(horizontal: true, vertical: true)
+        .frame(minWidth: 250)
+    }
+}
+
 struct RequestResponseView: View {
     @EnvironmentObject var appModel: AppModel
     @Environment(\.colorScheme) var colorScheme
@@ -137,6 +174,8 @@ struct RequestResponseView: View {
     @State private var formKvPairs: [KeyValuePair] = [
         KeyValuePair(key: "", value: "")
     ]
+    @State private var showNetworkDetails = false
+    @State private var networkDetails: NetworkDetails?
 
     @FocusState private var focused: Bool
 
@@ -200,6 +239,13 @@ struct RequestResponseView: View {
                 self.statusCode = "\(httpResponse.statusCode) OK"
                 self.requestTime = "\(String(format: "%.2f", requestTime))s"
                 self.responseSize = "\(responseSize) B"
+
+                // Set network details
+                self.networkDetails = NetworkDetails(
+                    localAddress: "127.0.0.1:${LOCAL_PORT}",
+                    remoteAddress: httpResponse.url?.host ?? "unknown",
+                    httpVersion: "HTTP/\(String(describing: HTTPURLResponse.version))"
+                )
             }
         }
         task?.resume()
@@ -428,7 +474,8 @@ struct RequestResponseView: View {
                             Text("Sending")
                         }
                         .transition(.opacity)
-                    } else {
+                    } else if !statusCode.isEmpty {
+                        // stats section
                         HStack {
                             Text(statusCode)
                                 .font(.subheadline)
@@ -450,12 +497,16 @@ struct RequestResponseView: View {
 
                             Image(systemName: "network")
                                 .foregroundColor(.gray)
-                                .onHover { inside in
-                                    if inside {
-                                        print("Local Address: ...")
-                                        print("Remote Address: ...")
-                                        print("HTTP Version: ...")
+                                .overlay(
+                                    Group {
+                                        if showNetworkDetails {
+                                            NetworkDetailsOverlay(details: networkDetails)
+                                                .offset(x: -30, y: 55)
+                                        }
                                     }
+                                )
+                                .onHover { inside in
+                                    showNetworkDetails = inside
                                 }
                         }
                     }
