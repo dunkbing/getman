@@ -116,7 +116,6 @@ struct RequestResponseView: View {
     @State private var selectedResponseTab = 0
     @State private var selectedMethod: HTTPMethod
     @State private var response: APIResponse?
-    @State private var rawResponse: String = ""
     @State private var statusText = ""
     @State private var statusCode = ""
     @State private var requestTime = ""
@@ -144,6 +143,27 @@ struct RequestResponseView: View {
     @State private var networkDetails: NetworkDetails?
 
     @FocusState private var focused: Bool
+
+    var prettyResponse: String {
+        if let data = self.response?.data,
+            let json = try? JSONSerialization.jsonObject(with: data),
+            let prettyData = try? JSONSerialization.data(
+                withJSONObject: json, options: .prettyPrinted),
+            let prettyString = String(data: prettyData, encoding: .utf8)
+        {
+            return prettyString
+        }
+        return ""
+    }
+
+    var rawReponse: String {
+        if let data = response?.data,
+            let rawString = String(data: data, encoding: .utf8)
+        {
+            return rawString
+        }
+        return ""
+    }
 
     let isHorizontalLayout: Bool
 
@@ -205,15 +225,6 @@ struct RequestResponseView: View {
                 self.statusCode = "\(httpResponse.statusCode) OK"
                 self.requestTime = "\(String(format: "%.2f", requestTime))s"
                 self.responseSize = "\(responseSize) B"
-
-                if let data = self.response?.data,
-                    let json = try? JSONSerialization.jsonObject(with: data),
-                    let prettyData = try? JSONSerialization.data(
-                        withJSONObject: json, options: .prettyPrinted),
-                    let prettyString = String(data: prettyData, encoding: .utf8)
-                {
-                    self.rawResponse = prettyString
-                }
 
                 // Set network details
                 self.networkDetails = NetworkDetails(
@@ -502,23 +513,14 @@ struct RequestResponseView: View {
             } else {
                 TabView(selection: $selectedResponseTab) {
                     // JSON View
-                    CodeEditorView(text: $rawResponse, editable: false, lang: .json)
+                    CodeEditorView(text: .constant(prettyResponse), editable: false, lang: .json)
                         .tabItem { Text("Pretty") }
                         .tag(0)
 
                     // Raw View
-                    ScrollView {
-                        if let data = response?.data,
-                            let rawString = String(data: data, encoding: .utf8)
-                        {
-                            Text(rawString)
-                                .font(.system(.body, design: .monospaced))
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                                .padding()
-                        }
-                    }
-                    .tabItem { Text("Raw") }
-                    .tag(1)
+                    CodeEditorView(text: .constant(rawReponse), editable: false, lang: .default)
+                        .tabItem { Text("Raw") }
+                        .tag(1)
 
                     // Headers View
                     ScrollView {
