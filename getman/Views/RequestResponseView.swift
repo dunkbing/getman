@@ -209,8 +209,16 @@ struct RequestResponseView: View {
             guard let httpResponse = response as? HTTPURLResponse else { return }
 
             let endTime = Date()
-            let requestTime = endTime.timeIntervalSince(startTime)
             let responseSize = data?.count ?? 0
+
+            let requestTimeInterval = endTime.timeIntervalSince(startTime)
+            let formattedRequestTime: String
+            if requestTimeInterval < 1.0 {
+                let milliseconds = Int(requestTimeInterval * 1000)
+                formattedRequestTime = "\(milliseconds) ms"
+            } else {
+                formattedRequestTime = "\(String(format: "%.2f", requestTimeInterval)) s"
+            }
 
             DispatchQueue.main.async {
                 self.response = APIResponse(
@@ -223,7 +231,7 @@ struct RequestResponseView: View {
                 self.isLoading = false
                 self.isSending = false
                 self.statusCode = "\(httpResponse.statusCode) OK"
-                self.requestTime = "\(String(format: "%.2f", requestTime))s"
+                self.requestTime = formattedRequestTime
                 self.responseSize = "\(responseSize) B"
 
                 // Set network details
