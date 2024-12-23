@@ -545,22 +545,9 @@ struct RequestResponseView: View {
                         .tag(1)
 
                     // Headers View
-                    ScrollView {
-                        if let headers = response?.headers {
-                            ForEach(headers.sorted(by: { $0.key < $1.key }), id: \.key) {
-                                key, value in
-                                VStack(alignment: .leading) {
-                                    Text(key).bold()
-                                    Text(value)
-                                }
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                                .padding(.vertical, 4)
-                            }
-                        }
-                    }
-                    .padding()
-                    .tabItem { Text("Headers") }
-                    .tag(2)
+                    HeadersView(responseHeaders: response?.headers)
+                        .tabItem { Text("Headers") }
+                        .tag(2)
 
                     // Info View
                     VStack(alignment: .leading, spacing: 12) {
