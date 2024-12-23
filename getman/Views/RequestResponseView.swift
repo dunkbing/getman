@@ -117,7 +117,7 @@ struct RequestResponseView: View {
     @State private var selectedMethod: HTTPMethod
     @State private var response: APIResponse?
     @State private var statusText = ""
-    @State private var statusCode = ""
+    @State private var statusCode: Int?
     @State private var requestTime = ""
     @State private var responseSize = ""
     @State private var isLoading = false
@@ -141,6 +141,7 @@ struct RequestResponseView: View {
     ]
     @State private var showNetworkDetails = false
     @State private var networkDetails: NetworkDetails?
+    @State private var showStatusCodeDesc = false
 
     @FocusState private var focused: Bool
 
@@ -161,6 +162,13 @@ struct RequestResponseView: View {
             let rawString = String(data: data, encoding: .utf8)
         {
             return rawString
+        }
+        return ""
+    }
+
+    private var statusCodeShortDesc: String {
+        if let code = statusCode {
+            return getStatusCodeShortDescription(code)
         }
         return ""
     }
@@ -230,7 +238,7 @@ struct RequestResponseView: View {
                 self.selectedResponseTab = 0
                 self.isLoading = false
                 self.isSending = false
-                self.statusCode = "\(httpResponse.statusCode) OK"
+                self.statusCode = httpResponse.statusCode
                 self.requestTime = formattedRequestTime
                 self.responseSize = "\(responseSize) B"
 
@@ -465,18 +473,24 @@ struct RequestResponseView: View {
                             Text("Sending")
                         }
                         .transition(.opacity)
-                    } else if !statusCode.isEmpty {
+                    } else if let code = statusCode {
                         // stats section
                         HStack {
-                            Text(statusCode)
+                            Text("\(code) \(statusCodeShortDesc)")
                                 .font(.subheadline)
                                 .padding(.horizontal, 4)
                                 .padding(.vertical, 2)
                                 .background(
-                                    statusCodeColor(for: statusCode).opacity(0.2)
+                                    statusCodeColor(for: code).opacity(0.2)
                                 )
                                 .cornerRadius(5)
-                                .foregroundColor(statusCodeColor(for: statusCode))
+                                .foregroundColor(statusCodeColor(for: code))
+                                .onHover { inside in
+                                    showStatusCodeDesc = inside
+                                }
+                                .popover(isPresented: $showStatusCodeDesc, arrowEdge: .bottom) {
+                                    StatusCodeDescriptionOverlay(statusCode: code)
+                                }
 
                             Text(requestTime)
                                 .foregroundColor(.gray)
@@ -569,12 +583,8 @@ struct RequestResponseView: View {
         .padding()
     }
 
-    private func statusCodeColor(for statusCode: String) -> Color {
-        guard let code = Int(statusCode.split(separator: " ").first ?? "") else {
-            return .gray
-        }
-
-        switch code {
+    private func statusCodeColor(for statusCode: Int) -> Color {
+        switch statusCode {
         case 200..<300:
             return .green
         case 300..<400:
