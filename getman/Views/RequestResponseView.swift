@@ -549,20 +549,10 @@ struct RequestResponseView: View {
                         .tabItem { Text("Headers") }
                         .tag(2)
 
-                    // Info View
-                    VStack(alignment: .leading, spacing: 12) {
-                        if let response = response {
-                            Text("Status Code: \(response.statusCode)")
-                            if let error = response.error {
-                                Text("Error: \(error.localizedDescription)")
-                                    .foregroundColor(.red)
-                            }
-                        }
-                    }
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding()
-                    .tabItem { Text("Info") }
-                    .tag(3)
+                    // Cookies View
+                    CookiesView(responseHeaders: response?.headers)
+                        .tabItem { Text("Cookies") }
+                        .tag(3)
                 }
             }
         }

@@ -153,14 +153,54 @@ func binaryExample(c *fiber.Ctx) error {
 
 // Cookies Example
 func cookiesExample(c *fiber.Ctx) error {
+	// Set session cookie
 	c.Cookie(&fiber.Cookie{
 		Name:     "session_id",
 		Value:    "12345",
 		HTTPOnly: true,
 		MaxAge:   900000,
 	})
+
+	// Set user preference cookie
+	c.Cookie(&fiber.Cookie{
+		Name:   "theme",
+		Value:  "dark",
+		MaxAge: 2592000, // 30 days
+	})
+
+	// Set language preference cookie
+	c.Cookie(&fiber.Cookie{
+		Name:   "language",
+		Value:  "en-US",
+		MaxAge: 2592000, // 30 days
+	})
+
+	// Set last visit cookie
+	c.Cookie(&fiber.Cookie{
+		Name:   "last_visit",
+		Value:  time.Now().Format(time.RFC3339),
+		MaxAge: 31536000, // 1 year
+	})
+
+	// Set secure cookie example
+	c.Cookie(&fiber.Cookie{
+		Name:     "secure_data",
+		Value:    "sensitive_information",
+		Secure:   true,
+		HTTPOnly: true,
+		SameSite: "Strict",
+		MaxAge:   3600, // 1 hour
+	})
+
 	return c.JSON(fiber.Map{
-		"message": "Cookie set",
+		"message": "Multiple cookies set",
+		"cookies": []string{
+			"session_id",
+			"theme",
+			"language",
+			"last_visit",
+			"secure_data",
+		},
 	})
 }
 
