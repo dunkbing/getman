@@ -71,7 +71,7 @@ struct CodeEditorView: View {
             font: font,
             tabWidth: tabWidth,
             lineHeight: lineHeight,
-            wrapLines: false,
+            wrapLines: true,
             editorOverscroll: editorOverscroll,
             cursorPositions: $cursorPositions,
             isEditable: editable
@@ -467,9 +467,7 @@ struct RequestResponseView: View {
                     if isLoading {
                         HStack {
                             CircularLoadingIndicator()
-                                .frame(width: 10, height: 10)
-                            Spacer()
-                                .frame(width: 5)
+                                .frame(width: 8, height: 8)
                             Text("Sending")
                         }
                         .transition(.opacity)
@@ -536,11 +534,13 @@ struct RequestResponseView: View {
                 TabView(selection: $selectedResponseTab) {
                     // JSON View
                     CodeEditorView(text: .constant(prettyResponse), editable: false, lang: .json)
+                        .id(response?.data.hashValue ?? 0)
                         .tabItem { Text("Pretty") }
                         .tag(0)
 
                     // Raw View
                     CodeEditorView(text: .constant(rawReponse), editable: false, lang: .default)
+                        .id(response?.data.hashValue ?? 0)
                         .tabItem { Text("Raw") }
                         .tag(1)
 
