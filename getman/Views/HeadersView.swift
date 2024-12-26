@@ -48,28 +48,6 @@ struct HeaderRowView: View {
                 .fill(Color.primary.opacity(0.05))
                 .opacity(isEvenRow ? 1 : 0)
         )
-        .contextMenu {
-            Button(action: {
-                NSPasteboard.general.clearContents()
-                NSPasteboard.general.setString("\(key): \(value)", forType: .string)
-            }) {
-                Label("Copy Header", systemImage: "doc.on.doc")
-            }
-
-            Button(action: {
-                NSPasteboard.general.clearContents()
-                NSPasteboard.general.setString(key, forType: .string)
-            }) {
-                Label("Copy Key", systemImage: "key")
-            }
-
-            Button(action: {
-                NSPasteboard.general.clearContents()
-                NSPasteboard.general.setString(value, forType: .string)
-            }) {
-                Label("Copy Value", systemImage: "text.quote")
-            }
-        }
     }
 }
 

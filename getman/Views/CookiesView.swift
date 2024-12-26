@@ -35,7 +35,6 @@ struct CookiesView: View {
                 let components = cookieString.components(separatedBy: ";").map {
                     $0.trimmingCharacters(in: .whitespaces)
                 }
-                print("components", components)
 
                 if let mainPart = components.first {
                     let nameValue = mainPart.components(separatedBy: "=")
