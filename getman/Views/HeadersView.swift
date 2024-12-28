@@ -11,7 +11,6 @@ struct HeaderItem: Identifiable, Hashable {
     let id = UUID()
     let key: String
     let value: String
-    let isEvenRow: Bool
 
     func hash(into hasher: inout Hasher) {
         hasher.combine(id)
@@ -25,7 +24,6 @@ struct HeaderItem: Identifiable, Hashable {
 struct HeaderRowView: View {
     let key: String
     let value: String
-    let isEvenRow: Bool
 
     var body: some View {
         HStack(alignment: .top, spacing: 16) {
@@ -33,21 +31,14 @@ struct HeaderRowView: View {
                 .font(.system(.body, design: .monospaced))
                 .foregroundColor(.primary)
                 .frame(width: 200, alignment: .leading)
-                .textSelection(.enabled)
                 .padding(.leading, 8)
 
             Text(value)
                 .font(.system(.body, design: .monospaced))
                 .foregroundColor(.secondary)
                 .frame(maxWidth: .infinity, alignment: .leading)
-                .textSelection(.enabled)
         }
         .padding(.vertical, 4)
-        .background(
-            Rectangle()
-                .fill(Color.primary.opacity(0.05))
-                .opacity(isEvenRow ? 1 : 0)
-        )
     }
 }
 
@@ -62,23 +53,19 @@ struct HeadersView: View {
             .map {
                 HeaderItem(
                     key: $0.element.key,
-                    value: $0.element.value,
-                    isEvenRow: $0.offset % 2 == 0)
+                    value: $0.element.value
+                )
             } ?? []
     }
 
     var body: some View {
-        ScrollView {
-            LazyVStack(alignment: .leading, spacing: 0) {
-                ForEach(headers) { header in
-                    HeaderRowView(
-                        key: header.key,
-                        value: header.value,
-                        isEvenRow: header.isEvenRow
-                    )
-                }
-            }
+        List(headers) { header in
+            HeaderRowView(
+                key: header.key,
+                value: header.value
+            )
         }
+        .listStyle(.plain)
         .padding()
     }
 }
