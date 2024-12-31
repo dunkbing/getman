@@ -14,6 +14,8 @@ struct getmanApp: App {
     var body: some Scene {
         WindowGroup {
             ContentView()
+                .backport.thinWindowBg()
+                .backport.hiddenToolbar()
                 .environmentObject(model)
         }
     }

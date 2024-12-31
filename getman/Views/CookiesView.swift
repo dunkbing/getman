@@ -93,10 +93,10 @@ struct CookiesView: View {
         ScrollView {
             if cookies.isEmpty {
                 VStack {
-                    Image(systemName: "cookie")
+                    Image("cookie")
                         .resizable()
                         .aspectRatio(contentMode: .fit)
-                        .frame(width: 50, height: 50)
+                        .frame(width: 35, height: 35)
                         .foregroundColor(.gray)
                     Text("No Cookies")
                         .font(.title2)
